@@ -1,0 +1,189 @@
+.resume {
+  animation: fadeIn 0.5s;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.resume-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.resume-header h1 {
+  font-size: 2.5rem;
+  color: #2c3e50;
+}
+
+.btn-download {
+  background-color: #3498db;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s, transform 0.3s;
+  display: inline-block;
+}
+
+.btn-download:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+}
+
+.resume-section {
+  margin-bottom: 3rem;
+}
+
+.resume-section h2 {
+  font-size: 1.8rem;
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #3498db;
+}
+
+.resume-section p {
+  line-height: 1.8;
+  color: #555;
+  font-size: 1.05rem;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #3498db;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 2rem;
+  padding-left: 2rem;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -0.5rem;
+  top: 0.5rem;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #3498db;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px #3498db;
+}
+
+.timeline-content h3 {
+  font-size: 1.3rem;
+  color: #2c3e50;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-content h4 {
+  font-size: 1.1rem;
+  color: #3498db;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.timeline-date {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  font-style: italic;
+}
+
+.timeline-content p {
+  color: #555;
+  line-height: 1.6;
+}
+
+.education-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.education-item {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.education-item h3 {
+  font-size: 1.2rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.education-item h4 {
+  font-size: 1rem;
+  color: #7f8c8d;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.education-date {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.certifications-list {
+  list-style: none;
+  padding: 0;
+}
+
+.certifications-list li {
+  background-color: #f8f9fa;
+  padding: 1rem 1.5rem;
+  margin-bottom: 0.75rem;
+  border-radius: 5px;
+  border-left: 4px solid #3498db;
+  color: #555;
+  font-size: 1.05rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .resume-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .resume-header h1 {
+    font-size: 2rem;
+  }
+
+  .btn-download {
+    width: 100%;
+    text-align: center;
+  }
+
+  .timeline {
+    padding-left: 1.5rem;
+  }
+
+  .timeline-item {
+    padding-left: 1.5rem;
+  }
+
+  .education-item,
+  .certifications-list li {
+    padding: 1rem;
+  }
+}

@@ -1,0 +1,25 @@
+# Copy this file to terraform.tfvars and update with your values
+
+resource_group_name = "portfolio-rg"
+location            = "East US"
+project_name        = "portfolio"
+environment         = "prod"
+backend_sku         = "B1"
+
+tags = {
+  Environment = "Production"
+  Project     = "Portfolio"
+  ManagedBy   = "Terraform"
+  Owner       = "YourName"
+}
+
+# Backend configuration for state storage
+# Uncomment and configure if using Azure backend for state
+# terraform {
+#   backend "azurerm" {
+#     resource_group_name  = "terraform-state-rg"
+#     storage_account_name = "terraformstate"
+#     container_name       = "tfstate"
+#     key                  = "portfolio.terraform.tfstate"
+#   }
+# }
