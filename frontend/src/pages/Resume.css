@@ -34,17 +34,7 @@
   transform: translateY(-2px);
 }
 
-.resume-section {
-  margin-bottom: 3rem;
-}
-
-.resume-section h2 {
-  font-size: 1.8rem;
-  color: #2c3e50;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #3498db;
-}
+/* ResumeSection styles moved to component CSS file */
 
 .resume-section p {
   line-height: 1.8;
@@ -118,10 +108,7 @@
 }
 
 .education-item {
-  background-color: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border-left: 4px solid #3498db;
+  /* Base styles inherited from Card component */
 }
 
 .education-item h3 {
@@ -186,10 +173,7 @@
 }
 
 .competency-item {
-  background-color: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border-left: 4px solid #3498db;
+  /* Base styles inherited from Card component */
 }
 
 .competency-item h3 {
@@ -227,10 +211,7 @@
 }
 
 .skill-category {
-  background-color: #f8f9fa;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border-left: 4px solid #3498db;
+  /* Base styles inherited from Card component */
 }
 
 .skill-category h3 {
