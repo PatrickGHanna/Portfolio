@@ -56,6 +56,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowReactApp");
+
+// Enable static files middleware to serve files from wwwroot
+app.UseStaticFiles();
+
 app.UseAuthorization();
 app.MapControllers();
 
