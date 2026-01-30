@@ -15,7 +15,11 @@ function ContactInfo({ contact }) {
             <a href={`mailto:${contact.email}`}>{contact.email}</a>
           </span>
         )}
-        {contact.linkedIn && <span>{contact.linkedIn}</span>}
+        {contact.linkedIn && (
+          <span>
+            <a href={contact.linkedIn} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          </span>
+        )}
       </div>
     </ResumeSection>
   )
