@@ -9,6 +9,13 @@ import EducationSection from '../components/resume/EducationSection'
 import CertificationsSection from '../components/resume/CertificationsSection'
 import './Resume.css'
 
+// Get backend base URL (without /api) for static files
+const getBackendBaseUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  // Remove /api suffix if present to get base backend URL
+  return apiUrl.replace(/\/api\/?$/, '')
+}
+
 function Resume() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -37,7 +44,7 @@ function Resume() {
     <div className="resume">
       <div className="resume-header">
         <h1>Resume</h1>
-        <a href="/resume.pdf" className="btn-download" download>
+        <a href={`${getBackendBaseUrl()}/resume.pdf`} className="btn-download" download>
           Download PDF
         </a>
       </div>
