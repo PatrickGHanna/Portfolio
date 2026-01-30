@@ -7,5 +7,5 @@ public class Experience
     public string StartDate { get; set; } = string.Empty;
     public string EndDate { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public string[] Achievements { get; set; } = Array.Empty<string>();
+    public Achievement[] Achievements { get; set; } = Array.Empty<Achievement>();
 }

@@ -13,6 +13,9 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Register application services
+builder.Services.AddScoped<Portfolio.Api.Services.IResumeService, Portfolio.Api.Services.ResumeService>();
+
 // Configure CORS for React frontend
 builder.Services.AddCors(options =>
 {

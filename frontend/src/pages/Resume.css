@@ -283,6 +283,28 @@
   font-size: 1.2rem;
 }
 
+.sub-achievements-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 1.5rem;
+}
+
+.sub-achievements-list li {
+  color: #555;
+  line-height: 1.8;
+  padding-left: 1.5rem;
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+
+.sub-achievements-list li::before {
+  content: '○';
+  position: absolute;
+  left: 0;
+  color: #3498db;
+  font-size: 0.9rem;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .resume-header {

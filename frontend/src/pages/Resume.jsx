@@ -105,7 +105,16 @@ function Resume() {
                   {exp.achievements && exp.achievements.length > 0 && (
                     <ul className="achievements-list">
                       {exp.achievements.map((achievement, achIndex) => (
-                        <li key={achIndex}>{achievement}</li>
+                        <li key={achIndex}>
+                          {achievement.text || achievement}
+                          {achievement.subAchievements && achievement.subAchievements.length > 0 && (
+                            <ul className="sub-achievements-list">
+                              {achievement.subAchievements.map((subAchievement, subIndex) => (
+                                <li key={subIndex}>{subAchievement}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </li>
                       ))}
                     </ul>
                   )}

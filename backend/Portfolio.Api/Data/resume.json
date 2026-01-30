@@ -168,16 +168,42 @@
       "endDate": "Present",
       "description": "Lead cross-functional teams of Developers, QA/SDETs, UX Specialist, Product Management, Site Reliability, and Data Analysts in delivering high-impact technology solutions in the Medicare Marketplace.",
       "achievements": [
-        "Lead team growth by hiring and onboarding nine professionals across Engineering, Product, UX, and Infrastructure functions.",
-        "Championed a servant leadership approach, building a team culture rooted in trust, autonomy, and career growth; Successfully coached an underperforming team member to a senior level promotion over the course of 4 years, while guiding multiple others to successful career advancements.",
-        "Delivered multiple successful projects on time and within budget including: Standardized user profiles across the website and call center interfaces by performing gap analysis and providing technical direction; the updated interface is now adopted by 1,350 call center agents.",
-        "Improved the conversion rate for Underwritten Medigap applications from 75% to over 90% by identifying common data points and patterns across 50+ application variations and providing technical guidance for a new pre-screening process.",
-        "Modernized a legacy codebase handling all website participant data. Established a formal vulnerability and monitoring review process reducing open security alerts from 527 to 0 and high urgency Pager Duty alerts from 240 in a rolling 6 month period to an average of less than 10.",
-        "Facilitated user acceptance testing with agents and end users to drive adoption and ensure products met acceptance criteria, reducing incidents on production go-live to 0.",
-        "Created delivery dashboards for teams in excel and powerBI to track velocity, quality, and delivery. Drove a 10% increase in velocity, and 40% decrease in reported production bugs.",
-        "Collaborated with development teams and stakeholders on roadmap planning, providing effort estimates and feasibility input to executive leadership.",
-        "Guided team process using Scrumban, with the flexibility to operate full Scrum ceremonies when project cadence or team preference required. Led all ceremonies when required due to team member absence.",
-        "Acted as a stabilizing force during five consecutive Annual Enrollment Periods (AEPs), leading incident management and ensuring compliance to 99.9% uptime SLAs; Receiving accolades from senior level leadership."
+        {
+          "text": "Lead team growth by hiring and onboarding nine professionals across Engineering, Product, UX, and Infrastructure functions.",
+          "subAchievements": []
+        },
+        {
+          "text": "Championed a servant leadership approach, building a team culture rooted in trust, autonomy, and career growth; Successfully coached an underperforming team member to a senior level promotion over the course of 4 years, while guiding multiple others to successful career advancements.",
+          "subAchievements": []
+        },
+        {
+          "text": "Delivered multiple successful projects on time and within budget including:",
+          "subAchievements": [
+            "Standardized user profiles across the website and call center interfaces by performing gap analysis and providing technical direction; the updated interface is now adopted by 1,350 call center agents.",
+            "Improved the conversion rate for Underwritten Medigap applications from 75% to over 90% by identifying common data points and patterns across 50+ application variations and providing technical guidance for a new pre-screening process.",
+            "Modernized a legacy codebase handling all website participant data. Established a formal vulnerability and monitoring review process reducing open security alerts from 527 to 0 and high urgency Pager Duty alerts from 240 in a rolling 6 month period to an average of less than 10."
+          ]
+        },
+        {
+          "text": "Facilitated user acceptance testing with agents and end users to drive adoption and ensure products met acceptance criteria, reducing incidents on production go-live to 0.",
+          "subAchievements": []
+        },
+        {
+          "text": "Created delivery dashboards for teams in excel and powerBI to track velocity, quality, and delivery. Drove a 10% increase in velocity, and 40% decrease in reported production bugs.",
+          "subAchievements": []
+        },
+        {
+          "text": "Collaborated with development teams and stakeholders on roadmap planning, providing effort estimates and feasibility input to executive leadership.",
+          "subAchievements": []
+        },
+        {
+          "text": "Guided team process using Scrumban, with the flexibility to operate full Scrum ceremonies when project cadence or team preference required. Led all ceremonies when required due to team member absence.",
+          "subAchievements": []
+        },
+        {
+          "text": "Acted as a stabilizing force during five consecutive Annual Enrollment Periods (AEPs), leading incident management and ensuring compliance to 99.9% uptime SLAs; Receiving accolades from senior level leadership.",
+          "subAchievements": []
+        }
       ]
     },
     {
@@ -187,7 +213,10 @@
       "endDate": "November 2019",
       "description": "Led two major projects, acting as the accountable owner for end-to-end delivery, cross-functional coordination, and team alignment; communicating and overseeing the work of 5 individual contributors.",
       "achievements": [
-        "Mentored QA and junior developers in coding standards, test automation, and agile best practices; co-authored test suites with QA staff improving test coverage by 60%."
+        {
+          "text": "Mentored QA and junior developers in coding standards, test automation, and agile best practices; co-authored test suites with QA staff improving test coverage by 60%.",
+          "subAchievements": []
+        }
       ]
     },
     {

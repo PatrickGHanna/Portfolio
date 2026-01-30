@@ -1,7 +1,6 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Portfolio.Api.Models;
+using Portfolio.Api.Services;
 
 namespace Portfolio.Api.Controllers;
 
@@ -10,48 +9,26 @@ namespace Portfolio.Api.Controllers;
 public class ResumeController : ControllerBase
 {
     private readonly ILogger<ResumeController> _logger;
-    private readonly IWebHostEnvironment _environment;
+    private readonly IResumeService _resumeService;
 
-    public ResumeController(ILogger<ResumeController> logger, IWebHostEnvironment environment)
+    public ResumeController(ILogger<ResumeController> logger, IResumeService resumeService)
     {
         _logger = logger;
-        _environment = environment;
+        _resumeService = resumeService;
     }
 
     [HttpGet]
-    public IActionResult Get()
+    public async Task<IActionResult> Get()
     {
         _logger.LogInformation("Resume data requested");
         
-        try
+        var resume = await _resumeService.LoadResumeAsync();
+
+        if (resume == null)
         {
-            var filePath = Path.Combine(_environment.ContentRootPath, "Data", "resume.json");
-            
-            if (!System.IO.File.Exists(filePath))
-            {
-                _logger.LogError("Resume data file not found at {FilePath}", filePath);
-                return StatusCode(500, "Resume data file not found");
-            }
-
-            var jsonContent = System.IO.File.ReadAllText(filePath);
-            var resume = JsonSerializer.Deserialize<Resume>(jsonContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
-
-            if (resume == null)
-            {
-                _logger.LogError("Failed to deserialize resume data");
-                return StatusCode(500, "Failed to load resume data");
-            }
-
-            return Ok(resume);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading resume data");
             return StatusCode(500, "An error occurred while loading resume data");
         }
+
+        return Ok(resume);
     }
 }
