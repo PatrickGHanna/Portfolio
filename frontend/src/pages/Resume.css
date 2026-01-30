@@ -158,6 +158,131 @@
   font-size: 1.05rem;
 }
 
+.contact-info {
+  margin-bottom: 2rem;
+}
+
+.contact-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  color: #555;
+  font-size: 1.05rem;
+}
+
+.contact-details a {
+  color: #3498db;
+  text-decoration: none;
+}
+
+.contact-details a:hover {
+  text-decoration: underline;
+}
+
+.competencies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.competency-item {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.competency-item h3 {
+  font-size: 1.1rem;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.competency-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.competency-list li {
+  color: #555;
+  line-height: 1.8;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.competency-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #3498db;
+  font-weight: bold;
+}
+
+.technical-skills {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.skill-category {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.skill-category h3 {
+  font-size: 1.1rem;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.skill-tag {
+  background-color: #3498db;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.timeline-description {
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.achievements-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+}
+
+.achievements-list li {
+  color: #555;
+  line-height: 1.8;
+  padding-left: 1.5rem;
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.achievements-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #3498db;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .resume-header {
@@ -184,6 +309,20 @@
 
   .education-item,
   .certifications-list li {
+    padding: 1rem;
+  }
+
+  .competencies-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-details {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .skill-category,
+  .competency-item {
     padding: 1rem;
   }
 }

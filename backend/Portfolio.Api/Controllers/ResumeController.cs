@@ -1,4 +1,7 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
+using Portfolio.Api.Models;
 
 namespace Portfolio.Api.Controllers;
 
@@ -7,10 +10,12 @@ namespace Portfolio.Api.Controllers;
 public class ResumeController : ControllerBase
 {
     private readonly ILogger<ResumeController> _logger;
+    private readonly IWebHostEnvironment _environment;
 
-    public ResumeController(ILogger<ResumeController> logger)
+    public ResumeController(ILogger<ResumeController> logger, IWebHostEnvironment environment)
     {
         _logger = logger;
+        _environment = environment;
     }
 
     [HttpGet]
@@ -18,36 +23,35 @@ public class ResumeController : ControllerBase
     {
         _logger.LogInformation("Resume data requested");
         
-        var response = new
+        try
         {
-            summary = "Experienced full stack developer with expertise in modern web technologies and cloud platforms.",
-            experience = new[]
+            var filePath = Path.Combine(_environment.ContentRootPath, "Data", "resume.json");
+            
+            if (!System.IO.File.Exists(filePath))
             {
-                new
-                {
-                    company = "Company Name",
-                    position = "Senior Developer",
-                    startDate = "2020-01",
-                    endDate = "Present",
-                    description = "Led development of scalable web applications using .NET Core and React."
-                }
-            },
-            education = new[]
-            {
-                new
-                {
-                    institution = "University Name",
-                    degree = "Bachelor of Science in Computer Science",
-                    graduationDate = "2019"
-                }
-            },
-            certifications = new[]
-            {
-                "Microsoft Certified: Azure Developer Associate",
-                "AWS Certified Solutions Architect"
+                _logger.LogError("Resume data file not found at {FilePath}", filePath);
+                return StatusCode(500, "Resume data file not found");
             }
-        };
 
-        return Ok(response);
+            var jsonContent = System.IO.File.ReadAllText(filePath);
+            var resume = JsonSerializer.Deserialize<Resume>(jsonContent, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            if (resume == null)
+            {
+                _logger.LogError("Failed to deserialize resume data");
+                return StatusCode(500, "Failed to load resume data");
+            }
+
+            return Ok(resume);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading resume data");
+            return StatusCode(500, "An error occurred while loading resume data");
+        }
     }
 }

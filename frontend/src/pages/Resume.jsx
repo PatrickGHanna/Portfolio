@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { resumeApi } from '../services/api'
+import ResumeSection from '../components/ResumeSection'
 import './Resume.css'
 
 function Resume() {
@@ -35,16 +36,62 @@ function Resume() {
         </a>
       </div>
 
+      {data?.contact && (
+        <ResumeSection className="contact-info">
+          <div className="contact-details">
+            {data.contact.phone && <span>{data.contact.phone}</span>}
+            {data.contact.email && (
+              <span>
+                <a href={`mailto:${data.contact.email}`}>{data.contact.email}</a>
+              </span>
+            )}
+            {data.contact.linkedIn && <span>{data.contact.linkedIn}</span>}
+          </div>
+        </ResumeSection>
+      )}
+
       {data?.summary && (
-        <section className="resume-section">
-          <h2>Summary</h2>
+        <ResumeSection title="Summary">
           <p>{data.summary}</p>
-        </section>
+        </ResumeSection>
+      )}
+
+      {data?.coreCompetencies && data.coreCompetencies.length > 0 && (
+        <ResumeSection title="Core Competencies">
+          <div className="competencies-grid">
+            {data.coreCompetencies.map((comp, index) => (
+              <div key={index} className="competency-item">
+                <h3>{comp.category}</h3>
+                <ul className="competency-list">
+                  {comp.items.map((item, itemIndex) => (
+                    <li key={itemIndex}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </ResumeSection>
+      )}
+
+      {data?.technicalSkills && data.technicalSkills.sections && data.technicalSkills.sections.length > 0 && (
+        <ResumeSection title="Technical Skills">
+          <div className="technical-skills">
+            {data.technicalSkills.sections.map((section, index) => (
+              <div key={index} className="skill-category">
+                <h3>{section.name}</h3>
+                <div className="skill-tags">
+                  {section.skills.map((skill, skillIndex) => (
+                    <span key={skillIndex} className="skill-tag">{skill}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </ResumeSection>
       )}
 
       {data?.experience && data.experience.length > 0 && (
-        <section className="resume-section">
-          <h2>Experience</h2>
+        <ResumeSection title="Professional Experience">
           <div className="timeline">
             {data.experience.map((exp, index) => (
               <div key={index} className="timeline-item">
@@ -54,17 +101,23 @@ function Resume() {
                   <p className="timeline-date">
                     {exp.startDate} - {exp.endDate}
                   </p>
-                  <p>{exp.description}</p>
+                  <p className="timeline-description">{exp.description}</p>
+                  {exp.achievements && exp.achievements.length > 0 && (
+                    <ul className="achievements-list">
+                      {exp.achievements.map((achievement, achIndex) => (
+                        <li key={achIndex}>{achievement}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             ))}
           </div>
-        </section>
+        </ResumeSection>
       )}
 
       {data?.education && data.education.length > 0 && (
-        <section className="resume-section">
-          <h2>Education</h2>
+        <ResumeSection title="Education">
           <div className="education-list">
             {data.education.map((edu, index) => (
               <div key={index} className="education-item">
@@ -74,18 +127,17 @@ function Resume() {
               </div>
             ))}
           </div>
-        </section>
+        </ResumeSection>
       )}
 
       {data?.certifications && data.certifications.length > 0 && (
-        <section className="resume-section">
-          <h2>Certifications</h2>
+        <ResumeSection title="Certifications">
           <ul className="certifications-list">
             {data.certifications.map((cert, index) => (
               <li key={index}>{cert}</li>
             ))}
           </ul>
-        </section>
+        </ResumeSection>
       )}
     </div>
   )
