@@ -34,8 +34,19 @@ function About() {
 
       <div className="about-content">
         <div className="about-main">
-          <h2>{data?.name || 'Your Name'}</h2>
-          <h3 className="about-title">{data?.title || 'Full Stack Developer'}</h3>
+          <div className="about-header-section">
+            {data?.imageUrl && (
+              <img 
+                src={data.imageUrl} 
+                alt={data?.name || 'Profile'} 
+                className="profile-picture"
+              />
+            )}
+            <div className="about-name-title">
+              <h2>{data?.name || 'Your Name'}</h2>
+              <h3 className="about-title">{data?.title || 'Full Stack Developer'}</h3>
+            </div>
+          </div>
           <p className="about-bio">{data?.bio || 'Bio information goes here.'}</p>
 
           <div className="about-skills">

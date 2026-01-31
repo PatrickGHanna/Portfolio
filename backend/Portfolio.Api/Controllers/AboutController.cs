@@ -20,22 +20,23 @@ public class AboutController : ControllerBase
         
         var response = new
         {
-            name = "Your Name",
-            title = "Full Stack Developer",
-            bio = "I'm a passionate developer with expertise in .NET Core, React, and cloud technologies. I love building scalable applications and solving complex problems.",
+            name = "Patrick Hanna",
+            title = "Software Engineering Manager | Servant Leader",
+            bio = "As an Engineering Manager with over a decade of experience, I thrive at the intersection of people, process, and technology. I’ve led cross-functional teams in delivering high-impact software solutions in regulated, high-stakes industries—from healthcare marketplaces to education platforms—where reliability, scalability, and user experience are paramount.",
+            imageUrl = "/images/profile.jpg",
             skills = new[]
             {
-                ".NET Core / C#",
-                "React.js",
-                "Node.js",
-                "Azure Cloud",
-                "Terraform",
-                "SQL Server"
+                "Engineering Management",
+                "Servant Leadership",
+                "Coaching & Mentoring",
+                "Stakeholder Management",
+                "Project Management",
+                "Technical Leadership"
             },
-            location = "Your Location",
-            email = "your.email@example.com",
-            linkedIn = "https://linkedin.com/in/yourprofile",
-            github = "https://github.com/yourusername"
+            location = "Salt Lake City, UT",
+            email = "Patrick.Gene.Hanna@gmail.com",
+            linkedIn = "https://linkedin.com/in/patrickghanna",
+            github = "https://github.com/patrickghanna"
         };
 
         return Ok(response);
