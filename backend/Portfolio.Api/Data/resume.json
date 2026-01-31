@@ -1,0 +1,247 @@
+{
+  "contact": {
+    "phone": "(952) 334-9342",
+    "email": "Patrick.Gene.Hanna@gmail.com",
+    "linkedIn": "https://www.linkedin.com/in/patrickgenehanna/"
+  },
+  "summary": "Engineering Manager with 10+ years of experience leading cross-functional teams to build scalable, high-quality software solutions in regulated, high-impact industries. Proven ability to mentor engineers through servant leadership, improve team performance, and deliver projects aligned with business goals through strong stakeholder and team collaboration.",
+  "coreCompetencies": [
+    {
+      "category": "Engineering Leadership & People Management",
+      "items": [
+        "Servant leadership",
+        "Coaching and mentoring",
+        "Performance management",
+        "Career development",
+        "Hiring and team scaling"
+      ]
+    },
+    {
+      "category": "Technical Strategy & Architecture",
+      "items": [
+        "Scalable system design",
+        "Modernization of legacy systems",
+        "Microservices architecture",
+        "High-availability and resilient systems",
+        "Event Driven Architecture"
+      ]
+    },
+    {
+      "category": "Agile Delivery & Execution",
+      "items": [
+        "Scrum",
+        "Kanban",
+        "Scrumban",
+        "Delivery forecasting",
+        "Velocity and quality metrics",
+        "Continuous improvement"
+      ]
+    },
+    {
+      "category": "Cross-Functional Collaboration",
+      "items": [
+        "Product, UX, QA, SRE, Data, and Executive stakeholder partnership",
+        "Roadmap planning and alignment"
+      ]
+    },
+    {
+      "category": "Operational Excellence & Reliability",
+      "items": [
+        "Incident management",
+        "On-call leadership",
+        "Monitoring and alerting",
+        "SLA/SLO ownership",
+        "Production readiness"
+      ]
+    },
+    {
+      "category": "Quality Engineering & SDLC",
+      "items": [
+        "Test automation",
+        "TDD",
+        "CI/CD practices",
+        "Defect reduction",
+        "Release management",
+        "Risk mitigation"
+      ]
+    },
+    {
+      "category": "Security & Compliance",
+      "items": [
+        "Vulnerability management",
+        "Monitoring and alerting reviews",
+        "Regulated environment delivery",
+        "Audit readiness"
+      ]
+    },
+    {
+      "category": "Data-Driven Decision Making",
+      "items": [
+        "Delivery dashboards",
+        "KPI tracking",
+        "Root cause analysis"
+      ]
+    },
+    {
+      "category": "Business Impact & Delivery Management",
+      "items": [
+        "Budgeting and resourcing",
+        "Prioritization",
+        "Cost/benefit analysis",
+        "Outcome-focused execution"
+      ]
+    },
+    {
+      "category": "Stakeholder Communication",
+      "items": [
+        "Executive-level communication",
+        "Technical translation",
+        "Expectation management",
+        "Consensus building"
+      ]
+    }
+  ],
+  "technicalSkills": {
+    "sections": [
+      {
+        "name": "Programming Languages & Frameworks",
+        "skills": [
+          "C#",
+          "Javascript",
+          "SQL",
+          "Python (basic)",
+          "Java",
+          ".NET Core",
+          "React"
+        ]
+      },
+      {
+        "name": "Architecture & Implementation Patterns",
+        "skills": [
+          "RESTful API design",
+          "Microservices implementation",
+          "Event Driven Architecture",
+          "SOLID principles",
+          "Test-driven development (TDD)"
+        ]
+      },
+      {
+        "name": "Testing & Quality Tooling",
+        "skills": [
+          "Selenium",
+          "Cypress",
+          "Playwright",
+          "UI Test Automation",
+          "Jest",
+          "XUnit",
+          "NUnit",
+          "Moq"
+        ]
+      },
+      {
+        "name": "Cloud & Infrastructure",
+        "skills": [
+          "Azure App Services",
+          "Azure Functions",
+          "Azure Key Vault"
+        ]
+      },
+      {
+        "name": "DevOps, Monitoring & Reliability Tools",
+        "skills": [
+          "Azure Application Insights",
+          "Sumologic",
+          "Serilog",
+          "PagerDuty",
+          "Github Actions",
+          "Octopus Deploy",
+          "Jenkins"
+        ]
+      }
+    ]
+  },
+  "experience": [
+    {
+      "company": "Willis Towers Watson",
+      "position": "Engineering Manager",
+      "startDate": "November 2019",
+      "endDate": "Present",
+      "description": "Lead cross-functional teams of Developers, QA/SDETs, UX Specialist, Product Management, Site Reliability, and Data Analysts in delivering high-impact technology solutions in the Medicare Marketplace.",
+      "achievements": [
+        {
+          "text": "Lead team growth by hiring and onboarding nine professionals across Engineering, Product, UX, and Infrastructure functions.",
+          "subAchievements": []
+        },
+        {
+          "text": "Championed a servant leadership approach, building a team culture rooted in trust, autonomy, and career growth; Successfully coached an underperforming team member to a senior level promotion over the course of 4 years, while guiding multiple others to successful career advancements.",
+          "subAchievements": []
+        },
+        {
+          "text": "Delivered multiple successful projects on time and within budget including:",
+          "subAchievements": [
+            "Standardized user profiles across the website and call center interfaces by performing gap analysis and providing technical direction; the updated interface is now adopted by 1,350 call center agents.",
+            "Improved the conversion rate for Underwritten Medigap applications from 75% to over 90% by identifying common data points and patterns across 50+ application variations and providing technical guidance for a new pre-screening process.",
+            "Modernized a legacy codebase handling all website participant data. Established a formal vulnerability and monitoring review process reducing open security alerts from 527 to 0 and high urgency Pager Duty alerts from 240 in a rolling 6 month period to an average of less than 10."
+          ]
+        },
+        {
+          "text": "Facilitated user acceptance testing with agents and end users to drive adoption and ensure products met acceptance criteria, reducing incidents on production go-live to 0.",
+          "subAchievements": []
+        },
+        {
+          "text": "Created delivery dashboards for teams in excel and powerBI to track velocity, quality, and delivery. Drove a 10% increase in velocity, and 40% decrease in reported production bugs.",
+          "subAchievements": []
+        },
+        {
+          "text": "Collaborated with development teams and stakeholders on roadmap planning, providing effort estimates and feasibility input to executive leadership.",
+          "subAchievements": []
+        },
+        {
+          "text": "Guided team process using Scrumban, with the flexibility to operate full Scrum ceremonies when project cadence or team preference required. Led all ceremonies when required due to team member absence.",
+          "subAchievements": []
+        },
+        {
+          "text": "Acted as a stabilizing force during five consecutive Annual Enrollment Periods (AEPs), leading incident management and ensuring compliance to 99.9% uptime SLAs; Receiving accolades from senior level leadership.",
+          "subAchievements": []
+        }
+      ]
+    },
+    {
+      "company": "Willis Towers Watson",
+      "position": "Software Engineer",
+      "startDate": "April 2017",
+      "endDate": "November 2019",
+      "description": "Led two major projects, acting as the accountable owner for end-to-end delivery, cross-functional coordination, and team alignment; communicating and overseeing the work of 5 individual contributors.",
+      "achievements": [
+        {
+          "text": "Mentored QA and junior developers in coding standards, test automation, and agile best practices; co-authored test suites with QA staff improving test coverage by 60%.",
+          "subAchievements": []
+        }
+      ]
+    },
+    {
+      "company": "Performance Matters",
+      "position": "Software Engineer",
+      "startDate": "June 2014",
+      "endDate": "April 2017",
+      "description": "Delivered high-quality code in C# and JavaScript for education-sector platforms, including performance tracking and evaluation tools.",
+      "achievements": []
+    },
+    {
+      "company": "Performance Matters",
+      "position": "Quality Assurance Engineer",
+      "startDate": "March 2013",
+      "endDate": "June 2014",
+      "description": "Developed 50+ automated UI test cases using Selenium in C#, improving regression testing efficiency and reducing manual QA workload.",
+      "achievements": []
+    }
+  ],
+  "education": [
+    {
+      "institution": "Westminster College",
+      "degree": "Bachelor of Science, Computer Science",
+      "graduationDate": "May 2014"
+    }
+  ],
+  "certifications": []
+}

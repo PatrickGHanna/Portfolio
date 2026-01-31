@@ -4,9 +4,17 @@ using Microsoft.ApplicationInsights.Channel;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Register application services
+builder.Services.AddScoped<Portfolio.Api.Services.IResumeService, Portfolio.Api.Services.ResumeService>();
 
 // Configure CORS for React frontend
 builder.Services.AddCors(options =>
@@ -48,6 +56,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowReactApp");
+
+// Enable static files middleware to serve files from wwwroot
+app.UseStaticFiles();
+
 app.UseAuthorization();
 app.MapControllers();
 

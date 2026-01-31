@@ -1,6 +1,20 @@
 import { useEffect, useState } from 'react'
 import { resumeApi } from '../services/api'
+import ContactInfo from '../components/resume/ContactInfo'
+import SummarySection from '../components/resume/SummarySection'
+import CoreCompetenciesSection from '../components/resume/CoreCompetenciesSection'
+import TechnicalSkillsSection from '../components/resume/TechnicalSkillsSection'
+import ProfessionalExperienceSection from '../components/resume/ProfessionalExperienceSection'
+import EducationSection from '../components/resume/EducationSection'
+import CertificationsSection from '../components/resume/CertificationsSection'
 import './Resume.css'
+
+// Get backend base URL (without /api) for static files
+const getBackendBaseUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  // Remove /api suffix if present to get base backend URL
+  return apiUrl.replace(/\/api\/?$/, '')
+}
 
 function Resume() {
   const [data, setData] = useState(null)
@@ -30,63 +44,24 @@ function Resume() {
     <div className="resume">
       <div className="resume-header">
         <h1>Resume</h1>
-        <a href="/resume.pdf" className="btn-download" download>
+        <a href={`${getBackendBaseUrl()}/resume.pdf`} className="btn-download" download>
           Download PDF
         </a>
       </div>
 
-      {data?.summary && (
-        <section className="resume-section">
-          <h2>Summary</h2>
-          <p>{data.summary}</p>
-        </section>
-      )}
+      <ContactInfo contact={data?.contact} />
 
-      {data?.experience && data.experience.length > 0 && (
-        <section className="resume-section">
-          <h2>Experience</h2>
-          <div className="timeline">
-            {data.experience.map((exp, index) => (
-              <div key={index} className="timeline-item">
-                <div className="timeline-content">
-                  <h3>{exp.position}</h3>
-                  <h4>{exp.company}</h4>
-                  <p className="timeline-date">
-                    {exp.startDate} - {exp.endDate}
-                  </p>
-                  <p>{exp.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <SummarySection summary={data?.summary} />
 
-      {data?.education && data.education.length > 0 && (
-        <section className="resume-section">
-          <h2>Education</h2>
-          <div className="education-list">
-            {data.education.map((edu, index) => (
-              <div key={index} className="education-item">
-                <h3>{edu.degree}</h3>
-                <h4>{edu.institution}</h4>
-                <p className="education-date">{edu.graduationDate}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <CoreCompetenciesSection coreCompetencies={data?.coreCompetencies} />
 
-      {data?.certifications && data.certifications.length > 0 && (
-        <section className="resume-section">
-          <h2>Certifications</h2>
-          <ul className="certifications-list">
-            {data.certifications.map((cert, index) => (
-              <li key={index}>{cert}</li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <TechnicalSkillsSection technicalSkills={data?.technicalSkills} />
+
+      <ProfessionalExperienceSection experience={data?.experience} />
+
+      <EducationSection education={data?.education} />
+
+      <CertificationsSection certifications={data?.certifications} />
     </div>
   )
 }

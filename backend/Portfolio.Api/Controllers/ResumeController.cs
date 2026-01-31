@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Portfolio.Api.Models;
+using Portfolio.Api.Services;
 
 namespace Portfolio.Api.Controllers;
 
@@ -7,47 +9,26 @@ namespace Portfolio.Api.Controllers;
 public class ResumeController : ControllerBase
 {
     private readonly ILogger<ResumeController> _logger;
+    private readonly IResumeService _resumeService;
 
-    public ResumeController(ILogger<ResumeController> logger)
+    public ResumeController(ILogger<ResumeController> logger, IResumeService resumeService)
     {
         _logger = logger;
+        _resumeService = resumeService;
     }
 
     [HttpGet]
-    public IActionResult Get()
+    public async Task<IActionResult> Get()
     {
         _logger.LogInformation("Resume data requested");
         
-        var response = new
-        {
-            summary = "Experienced full stack developer with expertise in modern web technologies and cloud platforms.",
-            experience = new[]
-            {
-                new
-                {
-                    company = "Company Name",
-                    position = "Senior Developer",
-                    startDate = "2020-01",
-                    endDate = "Present",
-                    description = "Led development of scalable web applications using .NET Core and React."
-                }
-            },
-            education = new[]
-            {
-                new
-                {
-                    institution = "University Name",
-                    degree = "Bachelor of Science in Computer Science",
-                    graduationDate = "2019"
-                }
-            },
-            certifications = new[]
-            {
-                "Microsoft Certified: Azure Developer Associate",
-                "AWS Certified Solutions Architect"
-            }
-        };
+        var resume = await _resumeService.LoadResumeAsync();
 
-        return Ok(response);
+        if (resume == null)
+        {
+            return StatusCode(500, "An error occurred while loading resume data");
+        }
+
+        return Ok(resume);
     }
 }
