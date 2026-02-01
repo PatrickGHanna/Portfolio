@@ -57,6 +57,10 @@
   font-size: 1.1rem;
   line-height: 1.8;
   color: #555;
+  margin-bottom: 1rem;
+}
+
+.about-bio:last-of-type {
   margin-bottom: 2rem;
 }
 

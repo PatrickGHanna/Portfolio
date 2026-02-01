@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { homeApi } from '../services/api'
 import './Home.css'
 
@@ -35,11 +36,11 @@ function Home() {
           {data?.description || 'Building modern web applications with passion and precision.'}
         </p>
         <div className="hero-cta">
-          <a href="#about" className="btn btn-primary">
-            Learn More
-          </a>
-          <a href="/projects" className="btn btn-secondary">
-            View Projects
+          <Link to="/about" className="btn btn-primary">
+            About Me
+          </Link>
+          <a href="https://github.com/PatrickGHanna/Portfolio" target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+            View on Github
           </a>
         </div>
       </section>

@@ -47,7 +47,13 @@ function About() {
               <h3 className="about-title">{data?.title || 'Full Stack Developer'}</h3>
             </div>
           </div>
-          <p className="about-bio">{data?.bio || 'Bio information goes here.'}</p>
+          {data?.bio ? (
+            data.bio.split('\n').filter(p => p.trim()).map((paragraph, index) => (
+              <p key={index} className="about-bio">{paragraph.trim()}</p>
+            ))
+          ) : (
+            <p className="about-bio">Bio information goes here.</p>
+          )}
 
           <div className="about-skills">
             <h3>Skills</h3>
