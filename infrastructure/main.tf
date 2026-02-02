@@ -6,14 +6,29 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 
   backend "azurerm" {
-    # Configure backend storage in terraform.tfvars or via environment variables
-    # resource_group_name  = "terraform-state-rg"
-    # storage_account_name = "terraformstate"
-    # container_name       = "tfstate"
-    # key                  = "portfolio.terraform.tfstate"
+    # Backend configuration can be provided via:
+    # 1. Backend-config flags during terraform init (recommended for CI/CD)
+    # 2. Variables in terraform.tfvars (if using partial configuration)
+    # 3. Environment variables (ARM_*)
+    #
+    # Example backend-config usage:
+    # terraform init -backend-config="resource_group_name=terraform-state-rg" \
+    #                -backend-config="storage_account_name=terraformstate12345" \
+    #                -backend-config="container_name=tfstate" \
+    #                -backend-config="key=portfolio.terraform.tfstate"
+    #
+    # Note: If using GitHub Actions workflow, configure these values as secrets:
+    # - TERRAFORM_STATE_RESOURCE_GROUP
+    # - TERRAFORM_STATE_STORAGE_ACCOUNT
+    # - TERRAFORM_STATE_CONTAINER
+    # - TERRAFORM_STATE_KEY
   }
 }
 
@@ -86,6 +101,8 @@ resource "azurerm_linux_web_app" "backend" {
     "ASPNETCORE_ENVIRONMENT"           = var.environment
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.portfolio.connection_string
     "APPINSIGHTS_INSTRUMENTATIONKEY"   = azurerm_application_insights.portfolio.instrumentation_key
+    # CORS configuration: Dynamically set to allow requests from the Static Web App frontend
+    # Terraform will ensure the frontend is created before setting this value
     "CORS_ALLOWED_ORIGINS"             = "https://${azurerm_static_web_app.frontend.default_host_name}"
   }
 
@@ -119,12 +136,17 @@ resource "random_string" "suffix" {
 # Outputs
 output "backend_url" {
   value       = "https://${azurerm_linux_web_app.backend.default_site_hostname}"
-  description = "Backend API URL"
+  description = "Backend App Service URL"
+}
+
+output "backend_api_url" {
+  value       = "https://${azurerm_linux_web_app.backend.default_site_hostname}/api"
+  description = "Backend API URL (with /api path)"
 }
 
 output "frontend_url" {
   value       = "https://${azurerm_static_web_app.frontend.default_host_name}"
-  description = "Frontend URL"
+  description = "Frontend Static Web App URL"
 }
 
 output "application_insights_connection_string" {
