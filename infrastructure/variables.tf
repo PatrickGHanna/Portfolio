@@ -37,3 +37,29 @@ variable "tags" {
     ManagedBy   = "Terraform"
   }
 }
+
+# Terraform backend configuration variables
+# These can be provided via terraform.tfvars or backend-config flags
+variable "terraform_backend_resource_group_name" {
+  description = "Resource group name for Terraform state storage"
+  type        = string
+  default     = ""
+}
+
+variable "terraform_backend_storage_account_name" {
+  description = "Storage account name for Terraform state"
+  type        = string
+  default     = ""
+}
+
+variable "terraform_backend_container_name" {
+  description = "Container name for Terraform state"
+  type        = string
+  default     = "tfstate"
+}
+
+variable "terraform_backend_key" {
+  description = "Key name for Terraform state file"
+  type        = string
+  default     = "portfolio.terraform.tfstate"
+}

@@ -13,13 +13,22 @@ tags = {
   Owner       = "YourName"
 }
 
-# Backend configuration for state storage
-# Uncomment and configure if using Azure backend for state
-# terraform {
-#   backend "azurerm" {
-#     resource_group_name  = "terraform-state-rg"
-#     storage_account_name = "terraformstate"
-#     container_name       = "tfstate"
-#     key                  = "portfolio.terraform.tfstate"
-#   }
-# }
+# Terraform Backend Configuration for State Storage
+# 
+# For remote state storage, configure these values as GitHub Secrets and use
+# backend-config flags during terraform init (as done in the GitHub Actions workflow):
+#
+# Required GitHub Secrets:
+# - TERRAFORM_STATE_RESOURCE_GROUP: Resource group name for state storage (e.g., "terraform-state-rg")
+# - TERRAFORM_STATE_STORAGE_ACCOUNT: Storage account name (e.g., "terraformstate12345")
+# - TERRAFORM_STATE_CONTAINER: Container name (e.g., "tfstate")
+# - TERRAFORM_STATE_KEY: State file key (e.g., "portfolio.terraform.tfstate")
+#
+# Example manual initialization:
+# terraform init -backend-config="resource_group_name=terraform-state-rg" \
+#                -backend-config="storage_account_name=terraformstate12345" \
+#                -backend-config="container_name=tfstate" \
+#                -backend-config="key=portfolio.terraform.tfstate"
+#
+# Note: Backend configuration cannot be set in terraform.tfvars. Use backend-config flags or
+# configure via the GitHub Actions workflow secrets.
