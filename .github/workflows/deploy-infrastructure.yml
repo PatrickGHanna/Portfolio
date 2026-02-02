@@ -1,0 +1,177 @@
+name: Deploy Infrastructure with Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      terraform_action:
+        description: 'Terraform action to perform'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'infrastructure/**'
+      - '.github/workflows/deploy-infrastructure.yml'
+
+env:
+  TERRAFORM_VERSION: '1.6.0'
+  TERRAFORM_WORKING_DIR: 'infrastructure'
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    name: Terraform Plan/Apply
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Configure Terraform Backend
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        env:
+          ARM_RESOURCE_GROUP_NAME: ${{ secrets.TERRAFORM_STATE_RESOURCE_GROUP }}
+          ARM_STORAGE_ACCOUNT_NAME: ${{ secrets.TERRAFORM_STATE_STORAGE_ACCOUNT }}
+          ARM_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER }}
+          ARM_KEY: ${{ secrets.TERRAFORM_STATE_KEY }}
+        run: |
+          if [ -n "$ARM_STORAGE_ACCOUNT_NAME" ]; then
+            echo "Configuring Azure backend for Terraform state"
+            # Backend configuration will be passed via -backend-config flags
+          else
+            echo "Using local state (no remote backend configured)"
+          fi
+
+      - name: Terraform Init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        env:
+          ARM_RESOURCE_GROUP_NAME: ${{ secrets.TERRAFORM_STATE_RESOURCE_GROUP }}
+          ARM_STORAGE_ACCOUNT_NAME: ${{ secrets.TERRAFORM_STATE_STORAGE_ACCOUNT }}
+          ARM_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER }}
+          ARM_KEY: ${{ secrets.TERRAFORM_STATE_KEY }}
+        run: |
+          if [ -n "$ARM_STORAGE_ACCOUNT_NAME" ]; then
+            terraform init \
+              -backend-config="resource_group_name=$ARM_RESOURCE_GROUP_NAME" \
+              -backend-config="storage_account_name=$ARM_STORAGE_ACCOUNT_NAME" \
+              -backend-config="container_name=$ARM_CONTAINER_NAME" \
+              -backend-config="key=$ARM_KEY"
+          else
+            terraform init
+          fi
+
+      - name: Terraform Format Check
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform fmt -check -recursive || exit 1
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        if: github.event_name == 'push' || github.event.inputs.terraform_action == 'plan'
+        run: |
+          terraform plan -no-color -out=tfplan
+          terraform show -no-color tfplan > plan.txt
+        continue-on-error: true
+
+      - name: Create Plan Summary
+        if: github.event_name == 'push' || github.event.inputs.terraform_action == 'plan'
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        run: |
+          if [ -f plan.txt ]; then
+            echo "## Terraform Plan Output" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat plan.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Terraform Apply
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        if: github.event.inputs.terraform_action == 'apply'
+        run: terraform apply -auto-approve tfplan
+
+      - name: Terraform Destroy
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        if: github.event.inputs.terraform_action == 'destroy'
+        run: terraform destroy -auto-approve
+
+      - name: Get Terraform Outputs
+        id: terraform_output
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        if: github.event.inputs.terraform_action == 'apply' || (github.event_name == 'push' && steps.plan.outcome == 'success')
+        run: |
+          if [ -f terraform.tfstate ] || [ -n "$ARM_STORAGE_ACCOUNT_NAME" ]; then
+            echo "backend_url=$(terraform output -raw backend_url)" >> $GITHUB_OUTPUT
+            echo "frontend_url=$(terraform output -raw frontend_url)" >> $GITHUB_OUTPUT
+            echo "app_insights_connection_string=$(terraform output -raw application_insights_connection_string)" >> $GITHUB_OUTPUT
+            echo "app_insights_instrumentation_key=$(terraform output -raw application_insights_instrumentation_key)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Display Outputs
+        if: steps.terraform_output.outcome == 'success'
+        run: |
+          echo "## Infrastructure Deployment Outputs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Backend URL" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.terraform_output.outputs.backend_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Frontend URL" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.terraform_output.outputs.frontend_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Application Insights Connection String" >> $GITHUB_STEP_SUMMARY
+          echo "Connection string has been output (sensitive)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Update GitHub Secrets
+        if: github.event.inputs.terraform_action == 'apply' && steps.terraform_output.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BACKEND_URL: ${{ steps.terraform_output.outputs.backend_url }}
+          FRONTEND_URL: ${{ steps.terraform_output.outputs.frontend_url }}
+          APP_INSIGHTS_CONNECTION_STRING: ${{ steps.terraform_output.outputs.app_insights_connection_string }}
+        run: |
+          echo "Note: Updating GitHub secrets requires a Personal Access Token (PAT) with repo:secrets scope"
+          echo "The GITHUB_TOKEN provided by Actions does not have permission to update secrets"
+          echo ""
+          echo "To update secrets, use the GitHub CLI or API with a PAT:"
+          echo ""
+          echo "Backend URL: $BACKEND_URL"
+          echo "Frontend URL: $FRONTEND_URL"
+          echo "API URL for VITE_API_URL: ${BACKEND_URL}/api"
+          echo ""
+          echo "You can manually update these secrets in GitHub Settings > Secrets and variables > Actions:"
+          echo "- VITE_API_URL: ${BACKEND_URL}/api"
+          echo "- APPLICATIONINSIGHTS_CONNECTION_STRING: [from output]"
+          echo "- CORS_ALLOWED_ORIGINS: $FRONTEND_URL"
+          echo ""
+          echo "Or use GitHub CLI (gh) with a PAT:"
+          echo "gh secret set VITE_API_URL --body '${BACKEND_URL}/api'"
+          echo "gh secret set CORS_ALLOWED_ORIGINS --body '$FRONTEND_URL'"
+          echo "gh secret set APPLICATIONINSIGHTS_CONNECTION_STRING --body '$APP_INSIGHTS_CONNECTION_STRING'"
+
+      - name: Azure Logout
+        if: always()
+        run: az logout
