@@ -20,7 +20,7 @@ terraform {
     #
     # Example backend-config usage:
     # terraform init -backend-config="resource_group_name=terraform-state-rg" \
-    #                -backend-config="storage_account_name=terraformstate12345" \
+    #                -backend-config="storage_account_name=pghportfoliostorage" \
     #                -backend-config="container_name=tfstate" \
     #                -backend-config="key=portfolio.terraform.tfstate"
     #
@@ -159,4 +159,9 @@ output "application_insights_instrumentation_key" {
   value       = azurerm_application_insights.portfolio.instrumentation_key
   description = "Application Insights instrumentation key"
   sensitive   = true
+}
+
+output "backend_app_service_name" {
+  value       = azurerm_linux_web_app.backend.name
+  description = "Backend App Service name (for deployment workflows)"
 }

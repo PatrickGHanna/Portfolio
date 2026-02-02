@@ -11,7 +11,6 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: portfolio-api
   DOTNET_VERSION: '8.0.x'
   PROJECT_PATH: 'backend/Portfolio.Api'
 
@@ -42,10 +41,30 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Get Backend App Service Name
+        id: get_app_name
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            # Try to get app service name from secret first, otherwise query dynamically
+            if [ -n "${{ secrets.AZURE_WEBAPP_NAME }}" ]; then
+              echo "Using app service name from secret: ${{ secrets.AZURE_WEBAPP_NAME }}"
+              echo "app_name=${{ secrets.AZURE_WEBAPP_NAME }}" >> $GITHUB_OUTPUT
+            else
+              echo "Querying for app service name in resource group: ${{ secrets.AZURE_RESOURCE_GROUP }}"
+              APP_NAME=$(az webapp list --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" --query "[?contains(name, 'portfolio') && contains(name, 'api')].name" -o tsv | head -n 1)
+              if [ -z "$APP_NAME" ]; then
+                echo "Error: Could not find backend app service in resource group"
+                exit 1
+              fi
+              echo "Found app service: $APP_NAME"
+              echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
+            fi
+
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          app-name: ${{ steps.get_app_name.outputs.app_name }}
           package: ./publish
           startup-command: 'dotnet Portfolio.Api.dll'
 
@@ -54,7 +73,7 @@ jobs:
         with:
           inlineScript: |
             az webapp config appsettings set \
-              --name ${{ env.AZURE_WEBAPP_NAME }} \
+              --name ${{ steps.get_app_name.outputs.app_name }} \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
               --settings CORS_ALLOWED_ORIGINS="${{ secrets.CORS_ALLOWED_ORIGINS }}"
 
@@ -63,7 +82,7 @@ jobs:
         with:
           inlineScript: |
             az webapp config appsettings set \
-              --name ${{ env.AZURE_WEBAPP_NAME }} \
+              --name ${{ steps.get_app_name.outputs.app_name }} \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
               --settings ApplicationInsights__ConnectionString="${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}"
 
