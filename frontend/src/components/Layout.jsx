@@ -23,7 +23,7 @@ function Layout({ children }) {
       <nav className="navbar">
         <div className="nav-container">
           <Link to="/" className="nav-logo" onClick={closeMenu}>
-            Portfolio
+            <img src="/images/logo.png" alt="Patrick Hanna" className="logo-image" />
           </Link>
           <button 
             className={`nav-toggle ${isMenuOpen ? 'active' : ''}`}
@@ -62,7 +62,7 @@ function Layout({ children }) {
         {children}
       </main>
       <footer className="footer">
-        <p>&copy; {new Date().getFullYear()} Portfolio. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} Patrick Hanna. All rights reserved.</p>
       </footer>
     </div>
   )

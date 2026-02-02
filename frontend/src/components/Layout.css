@@ -41,11 +41,19 @@ body {
   font-size: 1.5rem;
   font-weight: bold;
   text-decoration: none;
-  transition: color 0.3s;
+  transition: opacity 0.3s;
+  display: flex;
+  align-items: center;
 }
 
 .nav-logo:hover {
-  color: #3498db;
+  opacity: 0.8;
+}
+
+.logo-image {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
 }
 
 .nav-menu {
