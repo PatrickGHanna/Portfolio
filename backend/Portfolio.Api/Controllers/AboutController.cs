@@ -22,10 +22,7 @@ public class AboutController : ControllerBase
         {
             name = "Patrick Hanna",
             title = "Software Engineering Manager | Servant Leader",
-            bio = @"Let's get a little more personal than you will see on my LinkedIn. My real passions are helping people, enjoying others company,
-             and learning. For me, these are all very social endeavours. I want to see the people close to me happy, successful, and always growing. 
-             I get a lot of satisfaction when I can be a positive part of someones journey, whether as a coach, a friend, or a teammate. I love music 
-             festivals, rock climbing, snowboarding, and dungeons and dragons.",
+            bio = "Let's get a little more personal than you will see on my LinkedIn. My real passions are helping people, enjoying others company, and learning. For me, these are all very social endeavours. I want to see the people close to me happy, successful, and always growing. I get a lot of satisfaction when I can be a positive part of someones journey, whether as a coach, a friend, or a teammate. I love music festivals, rock climbing, snowboarding, and dungeons and dragons.",
             imageUrl = "/images/profile.jpg",
             skills = new[]
             {
