@@ -74,9 +74,33 @@ jobs:
               else
                 # Resource group is specified, query within that group
                 echo "Querying in resource group: $RESOURCE_GROUP"
+                
+                # First, list all app services in the resource group for debugging
+                echo "Listing all app services in resource group..."
+                az webapp list --resource-group "$RESOURCE_GROUP" --query "[].{name:name, state:state}" -o table
+                
+                # Try multiple query patterns to find the backend app service
+                # Pattern 1: Contains both 'portfolio' and 'api'
                 APP_NAME=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[?contains(name, 'portfolio') && contains(name, 'api')].name" -o tsv | head -n 1)
+                
+                # Pattern 2: Contains 'api' (in case portfolio is in resource group name, not app name)
                 if [ -z "$APP_NAME" ]; then
-                  echo "Error: Could not find backend app service in resource group: $RESOURCE_GROUP"
+                  echo "Trying alternative pattern: app service with 'api' in name..."
+                  APP_NAME=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[?contains(name, 'api')].name" -o tsv | head -n 1)
+                fi
+                
+                # Pattern 3: Any app service in the resource group (last resort)
+                if [ -z "$APP_NAME" ]; then
+                  echo "Trying to get any app service in resource group..."
+                  APP_NAME=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv)
+                fi
+                
+                if [ -z "$APP_NAME" ]; then
+                  echo "Error: Could not find any app service in resource group: $RESOURCE_GROUP"
+                  echo "Please verify:"
+                  echo "1. The resource group name is correct"
+                  echo "2. The app service has been created (run terraform apply if needed)"
+                  echo "3. Or set AZURE_WEBAPP_NAME secret with the exact app service name"
                   exit 1
                 fi
                 echo "Found app service: $APP_NAME"
