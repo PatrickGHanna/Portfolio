@@ -86,12 +86,14 @@ resource "azurerm_log_analytics_workspace" "portfolio" {
 }
 
 # App Service Plan for Backend API
+# Note: Using existing App Service Plan created manually
+# To import: terraform import azurerm_service_plan.backend /subscriptions/3ec28aba-e433-4d40-857b-cb203781151f/resourceGroups/portfolio-rg/providers/Microsoft.Web/serverFarms/ASP-portfoliorg-99bc
 resource "azurerm_service_plan" "backend" {
-  name                = "${var.project_name}-backend-plan"
+  name                = "ASP-portfoliorg-99bc"
   resource_group_name = azurerm_resource_group.portfolio.name
-  location            = var.location
+  location            = "westus2"  # Must match the actual location of the imported plan
   os_type             = "Windows"
-  sku_name            = var.backend_sku
+  sku_name            = "F1"
 
   tags = var.tags
 }
@@ -107,7 +109,8 @@ resource "azurerm_windows_web_app" "backend" {
     application_stack {
       dotnet_version = "v8.0"
     }
-    always_on         = true
+    # always_on cannot be enabled on Free (F1) SKU - must be false or omitted
+    always_on         = false
     health_check_path = "/api/health"
   }
 
