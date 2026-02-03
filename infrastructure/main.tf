@@ -116,9 +116,10 @@ resource "azurerm_linux_web_app" "backend" {
     "ASPNETCORE_ENVIRONMENT"                = var.environment
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.portfolio.connection_string
     "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.portfolio.instrumentation_key
-    # CORS configuration: Dynamically set to allow requests from the Static Web App frontend
-    # Terraform will ensure the frontend is created before setting this value
-    "CORS_ALLOWED_ORIGINS" = "https://${azurerm_static_web_app.frontend.default_host_name}"
+    # CORS: Set to "*" initially to break circular dependency with frontend
+    # After initial deployment, update this via Azure Portal or separate Terraform apply
+    # Target value: "https://${azurerm_static_web_app.frontend.default_host_name}"
+    "CORS_ALLOWED_ORIGINS" = "*"
   }
 
   https_only = true
@@ -147,6 +148,7 @@ resource "random_string" "suffix" {
   special = false
   upper   = false
 }
+
 
 # Outputs
 output "backend_url" {
