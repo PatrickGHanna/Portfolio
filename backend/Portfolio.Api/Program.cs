@@ -21,18 +21,31 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        var allowedOrigins = builder.Configuration["CORS_ALLOWED_ORIGINS"]?.Split(',') 
-            ?? new[] { "http://localhost:3000", "https://localhost:3000" };
+        var corsOrigins = builder.Configuration["CORS_ALLOWED_ORIGINS"];
+        string[] allowedOrigins;
         
-        if (builder.Environment.IsDevelopment())
+        if (string.IsNullOrWhiteSpace(corsOrigins) || corsOrigins == "*")
         {
-            policy.WithOrigins(allowedOrigins)
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
+            // Default to localhost for development, or allow all if explicitly set to "*"
+            allowedOrigins = builder.Environment.IsDevelopment()
+                ? new[] { "http://localhost:3000", "https://localhost:3000" }
+                : new[] { "*" };
         }
         else
         {
+            allowedOrigins = corsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        }
+        
+        if (allowedOrigins.Length == 1 && allowedOrigins[0] == "*")
+        {
+            // Wildcard: Allow all origins, but cannot use AllowCredentials
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+        else
+        {
+            // Specific origins: Can use AllowCredentials
             policy.WithOrigins(allowedOrigins)
                   .AllowAnyHeader()
                   .AllowAnyMethod()
@@ -41,9 +54,16 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add Application Insights
-builder.Services.AddApplicationInsightsTelemetry();
-builder.Services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
+// Add Application Insights (only if connection string is provided)
+var appInsightsConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+if (!string.IsNullOrWhiteSpace(appInsightsConnectionString))
+{
+    builder.Services.AddApplicationInsightsTelemetry(options =>
+    {
+        options.ConnectionString = appInsightsConnectionString;
+    });
+    builder.Services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
+}
 
 var app = builder.Build();
 
@@ -54,7 +74,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Only use HTTPS redirection in development
+// Azure App Service handles HTTPS termination at the load balancer
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseCors("AllowReactApp");
 
 // Enable static files middleware to serve files from wwwroot
