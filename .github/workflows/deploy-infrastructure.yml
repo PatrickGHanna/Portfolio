@@ -191,7 +191,8 @@ jobs:
       - name: Get Terraform Outputs
         id: terraform_output
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        if: github.event.inputs.terraform_action == 'apply' || (github.event_name == 'push' && steps.plan.outcome == 'success')
+        # Only get outputs after apply, not after plan
+        if: github.event.inputs.terraform_action == 'apply'
         env:
           ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
@@ -199,11 +200,24 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
           ARM_STORAGE_ACCOUNT_NAME: ${{ secrets.TERRAFORM_STATE_STORAGE_ACCOUNT }}
         run: |
-          if [ -f terraform.tfstate ] || [ -n "$ARM_STORAGE_ACCOUNT_NAME" ]; then
-            echo "backend_url=$(terraform output -raw backend_url)" >> $GITHUB_OUTPUT
-            echo "frontend_url=$(terraform output -raw frontend_url)" >> $GITHUB_OUTPUT
-            echo "app_insights_connection_string=$(terraform output -raw application_insights_connection_string)" >> $GITHUB_OUTPUT
-            echo "app_insights_instrumentation_key=$(terraform output -raw application_insights_instrumentation_key)" >> $GITHUB_OUTPUT
+          # Check if outputs exist before trying to read them
+          if terraform output -json > /dev/null 2>&1; then
+            echo "Reading Terraform outputs..."
+            # Check each output individually and only add if it exists
+            if terraform output -raw backend_url > /dev/null 2>&1; then
+              echo "backend_url=$(terraform output -raw backend_url)" >> $GITHUB_OUTPUT
+            fi
+            if terraform output -raw frontend_url > /dev/null 2>&1; then
+              echo "frontend_url=$(terraform output -raw frontend_url)" >> $GITHUB_OUTPUT
+            fi
+            if terraform output -raw application_insights_connection_string > /dev/null 2>&1; then
+              echo "app_insights_connection_string=$(terraform output -raw application_insights_connection_string)" >> $GITHUB_OUTPUT
+            fi
+            if terraform output -raw application_insights_instrumentation_key > /dev/null 2>&1; then
+              echo "app_insights_instrumentation_key=$(terraform output -raw application_insights_instrumentation_key)" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "No Terraform outputs found. This is expected if resources haven't been created yet."
           fi
 
       - name: Display Outputs

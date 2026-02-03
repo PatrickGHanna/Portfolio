@@ -47,7 +47,7 @@ function Home() {
 
       <section className="features">
         <div className="feature-card">
-          <h3>Full Stack Development</h3>
+          <h3>People Leadership</h3>
           <p>End-to-end web application development</p>
         </div>
         <div className="feature-card">
