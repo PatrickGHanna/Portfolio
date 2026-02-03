@@ -46,19 +46,27 @@ jobs:
         uses: azure/CLI@v2
         with:
           inlineScript: |
-            # Try to get app service name from secret first
-            if [ -n "${{ secrets.AZURE_WEBAPP_NAME }}" ]; then
-              echo "Using app service name from secret: ${{ secrets.AZURE_WEBAPP_NAME }}"
-              echo "app_name=${{ secrets.AZURE_WEBAPP_NAME }}" >> $GITHUB_OUTPUT
-              # Also set resource group from secret if available
-              if [ -n "${{ secrets.AZURE_RG }}" ]; then
-                echo "resource_group=${{ secrets.AZURE_RG }}" >> $GITHUB_OUTPUT
+            # Try to get app service name from variable or secret (variable takes precedence)
+            APP_NAME_VAR="${{ vars.AZURE_WEBAPP_NAME }}"
+            APP_NAME_SECRET="${{ secrets.AZURE_WEBAPP_NAME }}"
+            RESOURCE_GROUP_VAR="${{ vars.AZURE_RG }}"
+            RESOURCE_GROUP_SECRET="${{ secrets.AZURE_RG }}"
+            
+            # Use variable if set, otherwise fall back to secret
+            APP_NAME="${APP_NAME_VAR:-$APP_NAME_SECRET}"
+            RESOURCE_GROUP="${RESOURCE_GROUP_VAR:-$RESOURCE_GROUP_SECRET}"
+            
+            if [ -n "$APP_NAME" ]; then
+              echo "Using app service name: $APP_NAME"
+              echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
+              if [ -n "$RESOURCE_GROUP" ]; then
+                echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
               fi
             # Otherwise, query for app service by name pattern
             else
               echo "Querying for backend app service..."
-              # First, try to get resource group from secret
-              RESOURCE_GROUP="${{ secrets.AZURE_RG }}"
+              # Use variable or secret for resource group
+              RESOURCE_GROUP="${RESOURCE_GROUP_VAR:-$RESOURCE_GROUP_SECRET}"
               
               # If resource group is not set, search across all resource groups
               if [ -z "$RESOURCE_GROUP" ]; then
@@ -72,7 +80,7 @@ jobs:
                   echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
                   echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
                 else
-                  echo "Error: Could not find backend app service. Please set AZURE_WEBAPP_NAME or AZURE_RG secret."
+                  echo "Error: Could not find backend app service. Please set AZURE_WEBAPP_NAME variable/secret or AZURE_RG variable/secret."
                   exit 1
                 fi
               else
@@ -114,7 +122,7 @@ jobs:
                   echo "Please verify:"
                   echo "1. The resource group name is correct"
                   echo "2. The app service has been created (run terraform apply if needed)"
-                  echo "3. Or set AZURE_WEBAPP_NAME secret with the exact app service name"
+                  echo "3. Or set AZURE_WEBAPP_NAME variable/secret with the exact app service name"
                   exit 1
                 fi
                 echo "Found app service: $APP_NAME"
@@ -126,8 +134,9 @@ jobs:
             fi
             
             # Verify output was set
-            if [ -z "$APP_NAME" ] && [ -z "${{ secrets.AZURE_WEBAPP_NAME }}" ]; then
+            if [ -z "$APP_NAME" ] && [ -z "$APP_NAME_VAR" ] && [ -z "$APP_NAME_SECRET" ]; then
               echo "Error: Failed to determine app service name"
+              echo "Please set AZURE_WEBAPP_NAME as a variable or secret"
               exit 1
             fi
 
@@ -142,19 +151,27 @@ jobs:
         uses: azure/CLI@v2
         with:
           inlineScript: |
-            # Get app name from step output or secret
+            # Get app name from step output, variable, or secret (in that order)
             APP_NAME="${{ steps.get_app_name.outputs.app_name }}"
             RESOURCE_GROUP="${{ steps.get_app_name.outputs.resource_group }}"
             
-            # Fallback to secrets if output is empty
+            # Fallback to variable or secret if output is empty
             if [ -z "$APP_NAME" ]; then
-              APP_NAME="${{ secrets.AZURE_WEBAPP_NAME }}"
-              echo "Using app name from secret: $APP_NAME"
+              APP_NAME_VAR="${{ vars.AZURE_WEBAPP_NAME }}"
+              APP_NAME_SECRET="${{ secrets.AZURE_WEBAPP_NAME }}"
+              APP_NAME="${APP_NAME_VAR:-$APP_NAME_SECRET}"
+              if [ -n "$APP_NAME" ]; then
+                echo "Using app name from variable/secret: $APP_NAME"
+              fi
             fi
             
             if [ -z "$RESOURCE_GROUP" ]; then
-              RESOURCE_GROUP="${{ secrets.AZURE_RG }}"
-              echo "Using resource group from secret: $RESOURCE_GROUP"
+              RESOURCE_GROUP_VAR="${{ vars.AZURE_RG }}"
+              RESOURCE_GROUP_SECRET="${{ secrets.AZURE_RG }}"
+              RESOURCE_GROUP="${RESOURCE_GROUP_VAR:-$RESOURCE_GROUP_SECRET}"
+              if [ -n "$RESOURCE_GROUP" ]; then
+                echo "Using resource group from variable/secret: $RESOURCE_GROUP"
+              fi
             fi
             
             if [ -z "$APP_NAME" ]; then
@@ -204,24 +221,37 @@ jobs:
         uses: azure/CLI@v2
         with:
           inlineScript: |
-            # Get app name from step output or secret
+            # Get app name from step output, variable, or secret (in that order)
             APP_NAME="${{ steps.get_app_name.outputs.app_name }}"
-            RESOURCE_GROUP="${{ steps.get_app_name.outputs.resource_group || secrets.AZURE_RG }}"
+            RESOURCE_GROUP="${{ steps.get_app_name.outputs.resource_group }}"
             
-            # Fallback to secret if output is empty
+            # Fallback to variable or secret if output is empty
             if [ -z "$APP_NAME" ]; then
-              APP_NAME="${{ secrets.AZURE_WEBAPP_NAME }}"
-              echo "Using app name from secret: $APP_NAME"
+              APP_NAME_VAR="${{ vars.AZURE_WEBAPP_NAME }}"
+              APP_NAME_SECRET="${{ secrets.AZURE_WEBAPP_NAME }}"
+              APP_NAME="${APP_NAME_VAR:-$APP_NAME_SECRET}"
+              if [ -n "$APP_NAME" ]; then
+                echo "Using app name from variable/secret: $APP_NAME"
+              fi
+            fi
+            
+            if [ -z "$RESOURCE_GROUP" ]; then
+              RESOURCE_GROUP_VAR="${{ vars.AZURE_RG }}"
+              RESOURCE_GROUP_SECRET="${{ secrets.AZURE_RG }}"
+              RESOURCE_GROUP="${RESOURCE_GROUP_VAR:-$RESOURCE_GROUP_SECRET}"
+              if [ -n "$RESOURCE_GROUP" ]; then
+                echo "Using resource group from variable/secret: $RESOURCE_GROUP"
+              fi
             fi
             
             if [ -z "$APP_NAME" ]; then
               echo "Error: App service name not found."
-              echo "Please set AZURE_WEBAPP_NAME secret or ensure the 'Get Backend App Service Name' step succeeded."
+              echo "Please set AZURE_WEBAPP_NAME as a variable or secret, or ensure the 'Get Backend App Service Name' step succeeded."
               exit 1
             fi
             
             if [ -z "$RESOURCE_GROUP" ]; then
-              echo "Error: Resource group not found. Please set AZURE_RG secret."
+              echo "Error: Resource group not found. Please set AZURE_RG as a variable or secret."
               exit 1
             fi
             
