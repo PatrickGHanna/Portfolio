@@ -87,7 +87,7 @@ resource "azurerm_log_analytics_workspace" "portfolio" {
 
 # App Service Plan for Backend API
 resource "azurerm_service_plan" "backend" {
-  name                      = "${var.project_name}-backend-plan"
+  name                     = "${var.project_name}-backend-plan"
   resource_group_name      = azurerm_resource_group.portfolio.name
   location                 = azurerm_resource_group.portfolio.location
   os_type                  = "Linux"
