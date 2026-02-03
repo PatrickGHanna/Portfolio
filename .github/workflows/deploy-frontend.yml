@@ -53,6 +53,25 @@ jobs:
             echo "⚠ staticwebapp.config.json not found, skipping"
           fi
 
+      - name: Verify Build Output
+        run: |
+          echo "Checking build output in ${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}..."
+          ls -la "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/" || echo "Directory not found"
+          echo ""
+          echo "Checking index.html content:"
+          if [ -f "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/index.html" ]; then
+            cat "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/index.html"
+            echo ""
+            echo "✓ Built index.html found"
+            if grep -q "/src/main.jsx" "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/index.html"; then
+              echo "::error::ERROR: Built index.html still references /src/main.jsx instead of built assets!"
+              exit 1
+            fi
+          else
+            echo "::error::ERROR: Built index.html not found!"
+            exit 1
+          fi
+
       - name: Validate Deployment Token
         id: validate_token
         run: |
@@ -82,6 +101,6 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
-          app_location: ${{ env.APP_LOCATION }}
-          output_location: ${{ env.OUTPUT_LOCATION }}
+          app_location: ${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}
+          output_location: '.'
           skip_app_build: true
