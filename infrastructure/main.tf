@@ -33,6 +33,21 @@ terraform {
 }
 
 provider "azurerm" {
+  # Authentication can be configured via:
+  # 1. Environment variables (recommended for Service Principal):
+  #    - ARM_CLIENT_ID (Service Principal App ID)
+  #    - ARM_CLIENT_SECRET (Service Principal password)
+  #    - ARM_TENANT_ID (Azure AD Tenant ID)
+  #    - ARM_SUBSCRIPTION_ID (Azure Subscription ID)
+  #
+  # 2. Azure CLI (for User Account only):
+  #    Run: az login (must be a user account, not Service Principal)
+  #
+  # 3. Managed Identity (when running in Azure)
+  #
+  # Note: If using Azure CLI authenticated as Service Principal, you must
+  # set the ARM_* environment variables instead.
+  
   features {
     resource_group {
       prevent_deletion_if_contains_resources = false

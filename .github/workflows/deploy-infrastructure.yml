@@ -48,6 +48,15 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Configure Terraform Authentication
+        run: |
+          # Extract Service Principal credentials from AZURE_CREDENTIALS
+          # AZURE_CREDENTIALS is a JSON string with: clientId, clientSecret, tenantId, subscriptionId
+          echo "ARM_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.subscriptionId')" >> $GITHUB_ENV
+
       - name: Configure Terraform Backend
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         env:
@@ -66,6 +75,10 @@ jobs:
       - name: Terraform Init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
           ARM_RESOURCE_GROUP_NAME: ${{ secrets.TERRAFORM_STATE_RESOURCE_GROUP }}
           ARM_STORAGE_ACCOUNT_NAME: ${{ secrets.TERRAFORM_STATE_STORAGE_ACCOUNT }}
           ARM_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER }}
@@ -83,16 +96,31 @@ jobs:
 
       - name: Terraform Format Check
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
         run: terraform fmt -check -recursive || exit 1
 
       - name: Terraform Validate
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
         run: terraform validate
 
       - name: Terraform Plan
         id: plan
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         if: github.event_name == 'push' || github.event.inputs.terraform_action == 'plan'
+        env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
         run: |
           terraform plan -no-color -out=tfplan
           terraform show -no-color tfplan > plan.txt
@@ -112,17 +140,33 @@ jobs:
       - name: Terraform Apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         if: github.event.inputs.terraform_action == 'apply'
+        env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
         run: terraform apply -auto-approve tfplan
 
       - name: Terraform Destroy
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         if: github.event.inputs.terraform_action == 'destroy'
+        env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
         run: terraform destroy -auto-approve
 
       - name: Get Terraform Outputs
         id: terraform_output
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         if: github.event.inputs.terraform_action == 'apply' || (github.event_name == 'push' && steps.plan.outcome == 'success')
+        env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
+          ARM_STORAGE_ACCOUNT_NAME: ${{ secrets.TERRAFORM_STATE_STORAGE_ACCOUNT }}
         run: |
           if [ -f terraform.tfstate ] || [ -n "$ARM_STORAGE_ACCOUNT_NAME" ]; then
             echo "backend_url=$(terraform output -raw backend_url)" >> $GITHUB_OUTPUT

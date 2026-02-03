@@ -5,15 +5,91 @@ This directory contains Terraform configuration for deploying the portfolio webs
 ## Prerequisites
 
 1. **Azure CLI** installed and configured
+   - Download from [docs.microsoft.com/cli/azure/install-azure-cli](https://docs.microsoft.com/cli/azure/install-azure-cli)
+
+2. **Terraform** installed (version >= 1.0)
+   - Download from [terraform.io/downloads](https://www.terraform.io/downloads)
+
+3. **Azure Authentication** - Choose one method below
+
+## Authentication Setup
+
+Terraform requires authentication to Azure. You have three options:
+
+### Option 1: Service Principal Authentication (Recommended for CI/CD)
+
+If you're authenticated as a Service Principal via Azure CLI, you must use environment variables:
+
+1. **Get your Service Principal credentials**:
+   ```bash
+   # If you have the JSON output from service principal creation, extract:
+   # - clientId (becomes ARM_CLIENT_ID)
+   # - clientSecret (becomes ARM_CLIENT_SECRET)
+   # - tenantId (becomes ARM_TENANT_ID)
+   # - subscriptionId (becomes ARM_SUBSCRIPTION_ID)
+   
+   # Or get current account info:
+   az account show
+   ```
+
+2. **Set environment variables** (PowerShell):
+   ```powershell
+   $env:ARM_CLIENT_ID = "your-client-id"
+   $env:ARM_CLIENT_SECRET = "your-client-secret"
+   $env:ARM_TENANT_ID = "your-tenant-id"
+   $env:ARM_SUBSCRIPTION_ID = "your-subscription-id"
+   ```
+
+   Or (Command Prompt):
+   ```cmd
+   set ARM_CLIENT_ID=your-client-id
+   set ARM_CLIENT_SECRET=your-client-secret
+   set ARM_TENANT_ID=your-tenant-id
+   set ARM_SUBSCRIPTION_ID=your-subscription-id
+   ```
+
+3. **Verify authentication**:
+   ```bash
+   terraform init
+   ```
+
+### Option 2: Azure CLI with User Account
+
+If you want to use Azure CLI authentication, you must be logged in as a **User Account** (not Service Principal):
+
+1. **Logout from Service Principal** (if currently logged in):
+   ```bash
+   az logout
+   ```
+
+2. **Login as User Account**:
    ```bash
    az login
    az account set --subscription "Your Subscription ID"
    ```
 
-2. **Terraform** installed (version >= 1.0)
-   - Download from [terraform.io](https://www.terraform.io/downloads)
+3. **Verify**:
+   ```bash
+   az account show
+   # Should show "user" type, not "servicePrincipal"
+   ```
 
-3. **Service Principal** (for CI/CD) or use your Azure account credentials
+### Option 3: Create a New Service Principal
+
+If you need to create a Service Principal for Terraform:
+
+```bash
+# Create Service Principal with Contributor role
+az ad sp create-for-rbac --name "terraform-portfolio" --role contributor --scopes /subscriptions/{subscription-id} --sdk-auth
+
+# Save the JSON output - you'll need:
+# - clientId → ARM_CLIENT_ID
+# - clientSecret → ARM_CLIENT_SECRET
+# - tenantId → ARM_TENANT_ID
+# - subscriptionId → ARM_SUBSCRIPTION_ID
+```
+
+Then set the environment variables as shown in Option 1.
 
 ## Resources Created
 
@@ -111,9 +187,38 @@ For team collaboration, configure remote state storage:
 ## Troubleshooting
 
 ### Authentication Issues
+
+**Error: "Authenticating using the Azure CLI is only supported as a User (not a Service Principal)"**
+
+This means you're logged into Azure CLI as a Service Principal. You have two options:
+
+1. **Use Service Principal authentication** (set environment variables):
+   ```powershell
+   # PowerShell
+   $env:ARM_CLIENT_ID = "your-client-id"
+   $env:ARM_CLIENT_SECRET = "your-client-secret"
+   $env:ARM_TENANT_ID = "your-tenant-id"
+   $env:ARM_SUBSCRIPTION_ID = "your-subscription-id"
+   ```
+
+2. **Switch to User Account**:
+   ```bash
+   az logout
+   az login  # Login with your user account
+   az account show  # Verify it shows "user" type
+   ```
+
+**Check current authentication**:
 ```bash
-az login
 az account show
+# Look for "type": "user" or "type": "servicePrincipal"
+```
+
+**Verify environment variables are set**:
+```powershell
+# PowerShell
+$env:ARM_CLIENT_ID
+$env:ARM_TENANT_ID
 ```
 
 ### State Lock Issues
