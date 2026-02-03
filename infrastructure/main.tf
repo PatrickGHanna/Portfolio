@@ -107,9 +107,8 @@ resource "azurerm_linux_web_app" "backend" {
     application_stack {
       dotnet_version = "8.0"
     }
-    always_on             = true
-    health_check_path     = "/api/health"
-    health_check_interval = 60
+    always_on         = true
+    health_check_path = "/api/health"
   }
 
   app_settings = {
