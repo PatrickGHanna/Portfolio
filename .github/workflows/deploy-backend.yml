@@ -50,6 +50,10 @@ jobs:
             if [ -n "${{ secrets.AZURE_WEBAPP_NAME }}" ]; then
               echo "Using app service name from secret: ${{ secrets.AZURE_WEBAPP_NAME }}"
               echo "app_name=${{ secrets.AZURE_WEBAPP_NAME }}" >> $GITHUB_OUTPUT
+              # Also set resource group from secret if available
+              if [ -n "${{ secrets.AZURE_RG }}" ]; then
+                echo "resource_group=${{ secrets.AZURE_RG }}" >> $GITHUB_OUTPUT
+              fi
             # Otherwise, query for app service by name pattern
             else
               echo "Querying for backend app service..."
@@ -140,12 +144,17 @@ jobs:
           inlineScript: |
             # Get app name from step output or secret
             APP_NAME="${{ steps.get_app_name.outputs.app_name }}"
-            RESOURCE_GROUP="${{ steps.get_app_name.outputs.resource_group || secrets.AZURE_RG }}"
+            RESOURCE_GROUP="${{ steps.get_app_name.outputs.resource_group }}"
             
-            # Fallback to secret if output is empty
+            # Fallback to secrets if output is empty
             if [ -z "$APP_NAME" ]; then
               APP_NAME="${{ secrets.AZURE_WEBAPP_NAME }}"
               echo "Using app name from secret: $APP_NAME"
+            fi
+            
+            if [ -z "$RESOURCE_GROUP" ]; then
+              RESOURCE_GROUP="${{ secrets.AZURE_RG }}"
+              echo "Using resource group from secret: $RESOURCE_GROUP"
             fi
             
             if [ -z "$APP_NAME" ]; then
@@ -161,11 +170,21 @@ jobs:
             
             echo "Configuring CORS for app service: $APP_NAME in resource group: $RESOURCE_GROUP"
             
+            # List all app services for debugging
+            echo "Listing all app services in resource group '$RESOURCE_GROUP':"
+            az webapp list --resource-group "$RESOURCE_GROUP" --query "[].{name:name, state:state}" -o table || echo "Could not list app services"
+            
             # Verify app service exists
             if ! az webapp show --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
               echo "Error: App service '$APP_NAME' not found in resource group '$RESOURCE_GROUP'"
-              echo "Available app services:"
-              az webapp list --resource-group "$RESOURCE_GROUP" --query "[].name" -o table || true
+              echo ""
+              echo "Available app services in '$RESOURCE_GROUP':"
+              az webapp list --resource-group "$RESOURCE_GROUP" --query "[].name" -o table || echo "Could not list app services"
+              echo ""
+              echo "Please verify:"
+              echo "1. The app service name is correct: $APP_NAME"
+              echo "2. The resource group name is correct: $RESOURCE_GROUP"
+              echo "3. The app service exists in the specified resource group"
               exit 1
             fi
             
