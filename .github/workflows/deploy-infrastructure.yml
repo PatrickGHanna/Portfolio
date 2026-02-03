@@ -13,6 +13,11 @@ on:
           - plan
           - apply
           - destroy
+          - unlock
+      lock_id:
+        description: 'Lock ID to unlock (required if action is unlock)'
+        required: false
+        type: string
   push:
     branches:
       - main
@@ -130,6 +135,25 @@ jobs:
           ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
         run: terraform validate
+
+      - name: Unlock Terraform State
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        if: github.event.inputs.terraform_action == 'unlock'
+        env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
+        run: |
+          if [ -z "${{ github.event.inputs.lock_id }}" ]; then
+            echo "Error: Lock ID is required. Please provide the lock ID from the error message."
+            echo "Example: dde44d29-e65e-0312-6abb-896d4c94dd48"
+            exit 1
+          fi
+          echo "Unlocking Terraform state with ID: ${{ github.event.inputs.lock_id }}"
+          terraform force-unlock -force "${{ github.event.inputs.lock_id }}"
+          echo "State unlocked successfully"
+
 
       - name: Terraform Plan
         id: plan
