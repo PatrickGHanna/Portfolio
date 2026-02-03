@@ -7,7 +7,7 @@ variable "resource_group_name" {
 variable "location" {
   description = "Azure region for resources"
   type        = string
-  default     = "East US"
+  default     = "West US"
 }
 
 variable "project_name" {
@@ -23,9 +23,9 @@ variable "environment" {
 }
 
 variable "backend_sku" {
-  description = "SKU for the backend App Service Plan"
+  description = "SKU for the backend App Service Plan. Use F1 (Free) for free subscriptions, B1 (Basic) for paid subscriptions"
   type        = string
-  default     = "B1"
+  default     = "F1"
 }
 
 variable "tags" {
