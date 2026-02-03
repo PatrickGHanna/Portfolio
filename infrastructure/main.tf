@@ -87,18 +87,17 @@ resource "azurerm_log_analytics_workspace" "portfolio" {
 
 # App Service Plan for Backend API
 resource "azurerm_service_plan" "backend" {
-  name                     = "${var.project_name}-backend-plan"
-  resource_group_name      = azurerm_resource_group.portfolio.name
-  location                 = azurerm_resource_group.portfolio.location
-  os_type                  = "Linux"
-  sku_name                 = var.backend_sku
-  per_site_scaling_enabled = false
+  name                = "${var.project_name}-backend-plan"
+  resource_group_name = azurerm_resource_group.portfolio.name
+  location            = var.location
+  os_type             = "Windows"
+  sku_name            = var.backend_sku
 
   tags = var.tags
 }
 
 # App Service for Backend API (.NET Core)
-resource "azurerm_linux_web_app" "backend" {
+resource "azurerm_windows_web_app" "backend" {
   name                = "${var.project_name}-api-${random_string.suffix.result}"
   resource_group_name = azurerm_resource_group.portfolio.name
   location            = azurerm_service_plan.backend.location
@@ -136,7 +135,7 @@ resource "azurerm_static_web_app" "frontend" {
   sku_size            = "Free"
 
   app_settings = {
-    "VITE_API_URL" = "https://${azurerm_linux_web_app.backend.default_hostname}/api"
+    "VITE_API_URL" = "https://${azurerm_windows_web_app.backend.default_hostname}/api"
   }
 
   tags = var.tags
@@ -152,12 +151,12 @@ resource "random_string" "suffix" {
 
 # Outputs
 output "backend_url" {
-  value       = "https://${azurerm_linux_web_app.backend.default_hostname}"
+  value       = "https://${azurerm_windows_web_app.backend.default_hostname}"
   description = "Backend App Service URL"
 }
 
 output "backend_api_url" {
-  value       = "https://${azurerm_linux_web_app.backend.default_hostname}/api"
+  value       = "https://${azurerm_windows_web_app.backend.default_hostname}/api"
   description = "Backend API URL (with /api path)"
 }
 
@@ -179,6 +178,6 @@ output "application_insights_instrumentation_key" {
 }
 
 output "backend_app_service_name" {
-  value       = azurerm_linux_web_app.backend.name
+  value       = azurerm_windows_web_app.backend.name
   description = "Backend App Service name (for deployment workflows)"
 }
