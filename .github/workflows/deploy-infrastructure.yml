@@ -1,4 +1,3 @@
-
 name: Deploy Infrastructure with Terraform
 
 on:
@@ -31,14 +30,16 @@ env:
   TERRAFORM_WORKING_DIR: 'infrastructure'
 
 jobs:
-  terraform:
+  plan:
     runs-on: ubuntu-latest
-    name: Terraform Plan/Apply
+    name: Terraform Plan
     permissions:
       contents: read
       pull-requests: write
       id-token: write
-
+    # Skip plan for destroy and unlock actions
+    if: github.event.inputs.terraform_action != 'destroy' && github.event.inputs.terraform_action != 'unlock'
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -73,7 +74,6 @@ jobs:
         run: |
           if [ -n "$ARM_STORAGE_ACCOUNT_NAME" ]; then
             echo "Configuring Azure backend for Terraform state"
-            # Backend configuration will be passed via -backend-config flags
           else
             echo "Using local state (no remote backend configured)"
           fi
@@ -136,30 +136,10 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
         run: terraform validate
 
-      - name: Unlock Terraform State
-        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        if: github.event.inputs.terraform_action == 'unlock'
-        env:
-          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
-          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
-        run: |
-          if [ -z "${{ github.event.inputs.lock_id }}" ]; then
-            echo "Error: Lock ID is required. Please provide the lock ID from the error message."
-            echo "Example: dde44d29-e65e-0312-6abb-896d4c94dd48"
-            exit 1
-          fi
-          echo "Unlocking Terraform state with ID: ${{ github.event.inputs.lock_id }}"
-          terraform force-unlock -force "${{ github.event.inputs.lock_id }}"
-          echo "State unlocked successfully"
-
-
       - name: Terraform Plan
         id: plan
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         timeout-minutes: 10
-        if: github.event_name == 'push' || github.event.inputs.terraform_action == 'plan'
         env:
           ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
@@ -180,7 +160,6 @@ jobs:
         continue-on-error: true
 
       - name: Create Plan Summary
-        if: github.event_name == 'push' || github.event.inputs.terraform_action == 'plan'
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         run: |
           if [ -f plan.txt ]; then
@@ -190,10 +169,104 @@ jobs:
             echo '```' >> $GITHUB_STEP_SUMMARY
           fi
 
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        if: steps.plan.outcome == 'success'
+        with:
+          name: terraform-plan
+          path: ${{ env.TERRAFORM_WORKING_DIR }}/tfplan
+          retention-days: 5
+          if-no-files-found: warn
+
+      - name: Azure Logout
+        if: always()
+        run: az logout
+
+  apply:
+    runs-on: ubuntu-latest
+    name: Terraform Apply
+    needs: plan
+    permissions:
+      contents: read
+      id-token: write
+    # Only run apply if plan succeeded and action is apply (or push to main/master)
+    if: |
+      (github.event_name == 'push' || github.event.inputs.terraform_action == 'apply') &&
+      needs.plan.result == 'success'
+    environment:
+      name: production
+      url: ${{ steps.terraform_output.outputs.frontend_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Configure Terraform Authentication
+        run: |
+          # Extract Service Principal credentials from AZURE_CREDENTIALS
+          echo "ARM_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.subscriptionId')" >> $GITHUB_ENV
+
+      - name: Configure Terraform Backend
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        env:
+          ARM_RESOURCE_GROUP_NAME: ${{ secrets.TERRAFORM_STATE_RESOURCE_GROUP }}
+          ARM_STORAGE_ACCOUNT_NAME: ${{ secrets.TERRAFORM_STATE_STORAGE_ACCOUNT }}
+          ARM_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER }}
+          ARM_KEY: ${{ secrets.TERRAFORM_STATE_KEY }}
+        run: |
+          if [ -n "$ARM_STORAGE_ACCOUNT_NAME" ]; then
+            echo "Configuring Azure backend for Terraform state"
+          else
+            echo "Using local state (no remote backend configured)"
+          fi
+
+      - name: Terraform Init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        timeout-minutes: 5
+        env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
+          ARM_RESOURCE_GROUP_NAME: ${{ secrets.TERRAFORM_STATE_RESOURCE_GROUP }}
+          ARM_STORAGE_ACCOUNT_NAME: ${{ secrets.TERRAFORM_STATE_STORAGE_ACCOUNT }}
+          ARM_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER }}
+          ARM_KEY: ${{ secrets.TERRAFORM_STATE_KEY }}
+        run: |
+          if [ -n "$ARM_STORAGE_ACCOUNT_NAME" ]; then
+            STATE_KEY="${ARM_KEY:-terraform.tfstate}"
+            terraform init \
+              -backend-config="resource_group_name=$ARM_RESOURCE_GROUP_NAME" \
+              -backend-config="storage_account_name=$ARM_STORAGE_ACCOUNT_NAME" \
+              -backend-config="container_name=$ARM_CONTAINER_NAME" \
+              -backend-config="key=$STATE_KEY"
+          else
+            terraform init
+          fi
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: ${{ env.TERRAFORM_WORKING_DIR }}
+
       - name: Terraform Apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
         timeout-minutes: 30
-        if: github.event.inputs.terraform_action == 'apply'
         env:
           ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
@@ -201,22 +274,9 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
         run: terraform apply -auto-approve tfplan
 
-      - name: Terraform Destroy
-        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        timeout-minutes: 30
-        if: github.event.inputs.terraform_action == 'destroy'
-        env:
-          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
-          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
-        run: terraform destroy -auto-approve
-
       - name: Get Terraform Outputs
         id: terraform_output
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
-        # Only get outputs after apply, not after plan
-        if: github.event.inputs.terraform_action == 'apply'
         env:
           ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
@@ -227,7 +287,6 @@ jobs:
           # Check if outputs exist before trying to read them
           if terraform output -json > /dev/null 2>&1; then
             echo "Reading Terraform outputs..."
-            # Check each output individually and only add if it exists
             if terraform output -raw backend_url > /dev/null 2>&1; then
               echo "backend_url=$(terraform output -raw backend_url)" >> $GITHUB_OUTPUT
             fi
@@ -259,7 +318,7 @@ jobs:
           echo "Connection string has been output (sensitive)" >> $GITHUB_STEP_SUMMARY
 
       - name: Update GitHub Secrets
-        if: github.event.inputs.terraform_action == 'apply' && steps.terraform_output.outcome == 'success'
+        if: steps.terraform_output.outcome == 'success'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BACKEND_URL: ${{ steps.terraform_output.outputs.backend_url }}
@@ -284,6 +343,151 @@ jobs:
           echo "gh secret set VITE_API_URL --body '${BACKEND_URL}/api'"
           echo "gh secret set CORS_ALLOWED_ORIGINS --body '$FRONTEND_URL'"
           echo "gh secret set APPLICATIONINSIGHTS_CONNECTION_STRING --body '$APP_INSIGHTS_CONNECTION_STRING'"
+
+      - name: Azure Logout
+        if: always()
+        run: az logout
+
+  destroy:
+    runs-on: ubuntu-latest
+    name: Terraform Destroy
+    permissions:
+      contents: read
+      id-token: write
+    if: github.event.inputs.terraform_action == 'destroy'
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Configure Terraform Authentication
+        run: |
+          echo "ARM_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.subscriptionId')" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        timeout-minutes: 5
+        env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
+          ARM_RESOURCE_GROUP_NAME: ${{ secrets.TERRAFORM_STATE_RESOURCE_GROUP }}
+          ARM_STORAGE_ACCOUNT_NAME: ${{ secrets.TERRAFORM_STATE_STORAGE_ACCOUNT }}
+          ARM_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER }}
+          ARM_KEY: ${{ secrets.TERRAFORM_STATE_KEY }}
+        run: |
+          if [ -n "$ARM_STORAGE_ACCOUNT_NAME" ]; then
+            STATE_KEY="${ARM_KEY:-terraform.tfstate}"
+            terraform init \
+              -backend-config="resource_group_name=$ARM_RESOURCE_GROUP_NAME" \
+              -backend-config="storage_account_name=$ARM_STORAGE_ACCOUNT_NAME" \
+              -backend-config="container_name=$ARM_CONTAINER_NAME" \
+              -backend-config="key=$STATE_KEY"
+          else
+            terraform init
+          fi
+
+      - name: Terraform Destroy
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        timeout-minutes: 30
+        env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
+        run: terraform destroy -auto-approve
+
+      - name: Azure Logout
+        if: always()
+        run: az logout
+
+  unlock:
+    runs-on: ubuntu-latest
+    name: Unlock Terraform State
+    permissions:
+      contents: read
+      id-token: write
+    if: github.event.inputs.terraform_action == 'unlock'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Configure Terraform Authentication
+        run: |
+          echo "ARM_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.subscriptionId')" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        timeout-minutes: 5
+        env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
+          ARM_RESOURCE_GROUP_NAME: ${{ secrets.TERRAFORM_STATE_RESOURCE_GROUP }}
+          ARM_STORAGE_ACCOUNT_NAME: ${{ secrets.TERRAFORM_STATE_STORAGE_ACCOUNT }}
+          ARM_CONTAINER_NAME: ${{ secrets.TERRAFORM_STATE_CONTAINER }}
+          ARM_KEY: ${{ secrets.TERRAFORM_STATE_KEY }}
+        run: |
+          if [ -n "$ARM_STORAGE_ACCOUNT_NAME" ]; then
+            STATE_KEY="${ARM_KEY:-terraform.tfstate}"
+            terraform init \
+              -backend-config="resource_group_name=$ARM_RESOURCE_GROUP_NAME" \
+              -backend-config="storage_account_name=$ARM_STORAGE_ACCOUNT_NAME" \
+              -backend-config="container_name=$ARM_CONTAINER_NAME" \
+              -backend-config="key=$STATE_KEY"
+          else
+            terraform init
+          fi
+
+      - name: Unlock Terraform State
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        env:
+          ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
+        run: |
+          if [ -z "${{ github.event.inputs.lock_id }}" ]; then
+            echo "Error: Lock ID is required. Please provide the lock ID from the error message."
+            echo "Example: dde44d29-e65e-0312-6abb-896d4c94dd48"
+            exit 1
+          fi
+          echo "Unlocking Terraform state with ID: ${{ github.event.inputs.lock_id }}"
+          terraform force-unlock -force "${{ github.event.inputs.lock_id }}"
+          echo "State unlocked successfully"
 
       - name: Azure Logout
         if: always()
