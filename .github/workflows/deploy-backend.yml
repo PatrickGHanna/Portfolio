@@ -116,7 +116,15 @@ jobs:
                 echo "Found app service: $APP_NAME"
                 echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
                 echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
+                echo "App service name saved to output: $APP_NAME"
+                echo "Resource group saved to output: $RESOURCE_GROUP"
               fi
+            fi
+            
+            # Verify output was set
+            if [ -z "$APP_NAME" ] && [ -z "${{ secrets.AZURE_WEBAPP_NAME }}" ]; then
+              echo "Error: Failed to determine app service name"
+              exit 1
             fi
 
       - name: Deploy to Azure App Service
@@ -130,29 +138,92 @@ jobs:
         uses: azure/CLI@v2
         with:
           inlineScript: |
+            # Get app name from step output or secret
+            APP_NAME="${{ steps.get_app_name.outputs.app_name }}"
             RESOURCE_GROUP="${{ steps.get_app_name.outputs.resource_group || secrets.AZURE_RG }}"
+            
+            # Fallback to secret if output is empty
+            if [ -z "$APP_NAME" ]; then
+              APP_NAME="${{ secrets.AZURE_WEBAPP_NAME }}"
+              echo "Using app name from secret: $APP_NAME"
+            fi
+            
+            if [ -z "$APP_NAME" ]; then
+              echo "Error: App service name not found."
+              echo "Please set AZURE_WEBAPP_NAME secret or ensure the 'Get Backend App Service Name' step succeeded."
+              exit 1
+            fi
+            
             if [ -z "$RESOURCE_GROUP" ]; then
               echo "Error: Resource group not found. Please set AZURE_RG secret."
               exit 1
             fi
-            az webapp config appsettings set \
-              --name ${{ steps.get_app_name.outputs.app_name }} \
-              --resource-group "$RESOURCE_GROUP" \
-              --settings CORS_ALLOWED_ORIGINS="${{ secrets.CORS_ALLOWED_ORIGINS }}"
+            
+            echo "Configuring CORS for app service: $APP_NAME in resource group: $RESOURCE_GROUP"
+            
+            # Verify app service exists
+            if ! az webapp show --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+              echo "Error: App service '$APP_NAME' not found in resource group '$RESOURCE_GROUP'"
+              echo "Available app services:"
+              az webapp list --resource-group "$RESOURCE_GROUP" --query "[].name" -o table || true
+              exit 1
+            fi
+            
+            # Only set CORS if the secret is provided
+            if [ -n "${{ secrets.CORS_ALLOWED_ORIGINS }}" ]; then
+              az webapp config appsettings set \
+                --name "$APP_NAME" \
+                --resource-group "$RESOURCE_GROUP" \
+                --settings CORS_ALLOWED_ORIGINS="${{ secrets.CORS_ALLOWED_ORIGINS }}"
+              echo "CORS_ALLOWED_ORIGINS updated successfully"
+            else
+              echo "Warning: CORS_ALLOWED_ORIGINS secret is not set. Skipping CORS configuration."
+              echo "You can set it later via Azure Portal or update the secret and re-run this workflow."
+            fi
 
       - name: Configure App Settings - Application Insights
         uses: azure/CLI@v2
         with:
           inlineScript: |
+            # Get app name from step output or secret
+            APP_NAME="${{ steps.get_app_name.outputs.app_name }}"
             RESOURCE_GROUP="${{ steps.get_app_name.outputs.resource_group || secrets.AZURE_RG }}"
+            
+            # Fallback to secret if output is empty
+            if [ -z "$APP_NAME" ]; then
+              APP_NAME="${{ secrets.AZURE_WEBAPP_NAME }}"
+              echo "Using app name from secret: $APP_NAME"
+            fi
+            
+            if [ -z "$APP_NAME" ]; then
+              echo "Error: App service name not found."
+              echo "Please set AZURE_WEBAPP_NAME secret or ensure the 'Get Backend App Service Name' step succeeded."
+              exit 1
+            fi
+            
             if [ -z "$RESOURCE_GROUP" ]; then
               echo "Error: Resource group not found. Please set AZURE_RG secret."
               exit 1
             fi
-            az webapp config appsettings set \
-              --name ${{ steps.get_app_name.outputs.app_name }} \
-              --resource-group "$RESOURCE_GROUP" \
-              --settings ApplicationInsights__ConnectionString="${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}"
+            
+            echo "Configuring Application Insights for app service: $APP_NAME in resource group: $RESOURCE_GROUP"
+            
+            # Verify app service exists
+            if ! az webapp show --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+              echo "Error: App service '$APP_NAME' not found in resource group '$RESOURCE_GROUP'"
+              exit 1
+            fi
+            
+            # Only set Application Insights if the secret is provided
+            if [ -n "${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}" ]; then
+              az webapp config appsettings set \
+                --name "$APP_NAME" \
+                --resource-group "$RESOURCE_GROUP" \
+                --settings ApplicationInsights__ConnectionString="${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}"
+              echo "Application Insights connection string updated successfully"
+            else
+              echo "Warning: APPLICATIONINSIGHTS_CONNECTION_STRING secret is not set. Skipping Application Insights configuration."
+            fi
 
       - name: Azure Logout
         run: az logout
