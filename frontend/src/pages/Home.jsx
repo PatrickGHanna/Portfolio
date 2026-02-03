@@ -48,7 +48,7 @@ function Home() {
       <section className="features">
         <div className="feature-card">
           <h3>People Leadership</h3>
-          <p>End-to-end web application development</p>
+          <p>A strong focus on coaching, mentorship, and team building.</p>
         </div>
         <div className="feature-card">
           <h3>Cloud Solutions</h3>
