@@ -47,7 +47,7 @@ provider "azurerm" {
   #
   # Note: If using Azure CLI authenticated as Service Principal, you must
   # set the ARM_* environment variables instead.
-  
+
   features {
     resource_group {
       prevent_deletion_if_contains_resources = false
@@ -107,18 +107,18 @@ resource "azurerm_linux_web_app" "backend" {
     application_stack {
       dotnet_version = "8.0"
     }
-    always_on = true
-    health_check_path = "/api/health"
+    always_on             = true
+    health_check_path     = "/api/health"
     health_check_interval = 60
   }
 
   app_settings = {
-    "ASPNETCORE_ENVIRONMENT"           = var.environment
+    "ASPNETCORE_ENVIRONMENT"                = var.environment
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.portfolio.connection_string
-    "APPINSIGHTS_INSTRUMENTATIONKEY"   = azurerm_application_insights.portfolio.instrumentation_key
+    "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.portfolio.instrumentation_key
     # CORS configuration: Dynamically set to allow requests from the Static Web App frontend
     # Terraform will ensure the frontend is created before setting this value
-    "CORS_ALLOWED_ORIGINS"             = "https://${azurerm_static_web_app.frontend.default_host_name}"
+    "CORS_ALLOWED_ORIGINS" = "https://${azurerm_static_web_app.frontend.default_host_name}"
   }
 
   https_only = true

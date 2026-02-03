@@ -85,12 +85,29 @@ jobs:
           ARM_KEY: ${{ secrets.TERRAFORM_STATE_KEY }}
         run: |
           if [ -n "$ARM_STORAGE_ACCOUNT_NAME" ]; then
+            # Validate all required backend configuration values are set
+            if [ -z "$ARM_RESOURCE_GROUP_NAME" ]; then
+              echo "Error: TERRAFORM_STATE_RESOURCE_GROUP secret is not set"
+              exit 1
+            fi
+            if [ -z "$ARM_CONTAINER_NAME" ]; then
+              echo "Error: TERRAFORM_STATE_CONTAINER secret is not set"
+              exit 1
+            fi
+            # Use default key if not provided
+            STATE_KEY="${ARM_KEY:-terraform.tfstate}"
+            echo "Initializing Terraform with Azure backend..."
+            echo "Resource Group: $ARM_RESOURCE_GROUP_NAME"
+            echo "Storage Account: $ARM_STORAGE_ACCOUNT_NAME"
+            echo "Container: $ARM_CONTAINER_NAME"
+            echo "State Key: $STATE_KEY"
             terraform init \
               -backend-config="resource_group_name=$ARM_RESOURCE_GROUP_NAME" \
               -backend-config="storage_account_name=$ARM_STORAGE_ACCOUNT_NAME" \
               -backend-config="container_name=$ARM_CONTAINER_NAME" \
-              -backend-config="key=$ARM_KEY"
+              -backend-config="key=$STATE_KEY"
           else
+            echo "Using local state (no remote backend configured)"
             terraform init
           fi
 
