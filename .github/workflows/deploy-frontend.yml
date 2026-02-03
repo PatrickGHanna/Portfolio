@@ -41,8 +41,31 @@ jobs:
       - name: Build frontend
         working-directory: ${{ env.APP_LOCATION }}
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || vars.VITE_API_URL }}
         run: npm run build
+
+      - name: Validate Deployment Token
+        id: validate_token
+        run: |
+          if [ -z "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" ]; then
+            echo "::error::AZURE_STATIC_WEB_APPS_API_TOKEN secret is not set"
+            echo ""
+            echo "To get the deployment token:"
+            echo "1. Go to Azure Portal: https://portal.azure.com"
+            echo "2. Navigate to your Static Web App resource"
+            echo "3. Click on 'Manage deployment token' in the left menu"
+            echo "4. Copy the deployment token"
+            echo "5. Go to GitHub: Settings → Secrets and variables → Actions"
+            echo "6. Click 'New repository secret'"
+            echo "7. Name: AZURE_STATIC_WEB_APPS_API_TOKEN"
+            echo "8. Value: (paste the token)"
+            echo "9. Click 'Add secret'"
+            echo ""
+            echo "Alternatively, you can get it via Azure CLI:"
+            echo "  az staticwebapp secrets list --name <static-web-app-name> --resource-group <resource-group> --query 'properties.apiKey' -o tsv"
+            exit 1
+          fi
+          echo "Deployment token found"
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
