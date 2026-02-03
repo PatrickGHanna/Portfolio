@@ -91,7 +91,7 @@ resource "azurerm_log_analytics_workspace" "portfolio" {
 resource "azurerm_service_plan" "backend" {
   name                = "ASP-portfoliorg-99bc"
   resource_group_name = azurerm_resource_group.portfolio.name
-  location            = "westus2"  # Must match the actual location of the imported plan
+  location            = "westus2" # Must match the actual location of the imported plan
   os_type             = "Windows"
   sku_name            = "F1"
 
