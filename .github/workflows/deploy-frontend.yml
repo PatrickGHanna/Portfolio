@@ -53,6 +53,21 @@ jobs:
             echo "⚠ staticwebapp.config.json not found, skipping"
           fi
 
+      - name: Verify dist folder contents before deployment
+        run: |
+          echo "=== Contents of dist folder ==="
+          ls -la "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/"
+          echo ""
+          echo "=== index.html content ==="
+          cat "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/index.html"
+          echo ""
+          echo "=== Checking for source index.html ==="
+          if [ -f "${{ env.APP_LOCATION }}/index.html" ]; then
+            echo "WARNING: Source index.html exists at ${{ env.APP_LOCATION }}/index.html"
+            echo "Content:"
+            cat "${{ env.APP_LOCATION }}/index.html"
+          fi
+
       - name: Verify Build Output
         run: |
           echo "Checking build output in ${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}..."
@@ -95,12 +110,23 @@ jobs:
           fi
           echo "Deployment token found"
 
+      - name: Prepare deployment package
+        run: |
+          # Create a clean deployment directory with only built files
+          mkdir -p deploy-package
+          cp -r "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}"/* deploy-package/
+          echo "=== Deployment package contents ==="
+          ls -la deploy-package/
+          echo ""
+          echo "=== index.html in deployment package ==="
+          cat deploy-package/index.html
+
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
-          app_location: ${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}
+          app_location: deploy-package
           output_location: '.'
           skip_app_build: true
