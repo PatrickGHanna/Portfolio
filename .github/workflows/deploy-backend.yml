@@ -124,7 +124,7 @@ jobs:
         with:
           app-name: ${{ steps.get_app_name.outputs.app_name }}
           package: ./publish
-          startup-command: 'dotnet Portfolio.Api.dll'
+          # startup-command is not needed for Windows web apps - .NET runtime is configured via application stack
 
       - name: Configure App Settings - CORS
         uses: azure/CLI@v2
