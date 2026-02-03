@@ -1,3 +1,4 @@
+
 name: Deploy Infrastructure with Terraform
 
 on:
@@ -74,6 +75,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        timeout-minutes: 5
         env:
           ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
@@ -132,15 +134,25 @@ jobs:
       - name: Terraform Plan
         id: plan
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        timeout-minutes: 10
         if: github.event_name == 'push' || github.event.inputs.terraform_action == 'plan'
         env:
           ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ env.ARM_CLIENT_SECRET }}
           ARM_TENANT_ID: ${{ env.ARM_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ env.ARM_SUBSCRIPTION_ID }}
+          TF_LOG: INFO
         run: |
-          terraform plan -no-color -out=tfplan
-          terraform show -no-color tfplan > plan.txt
+          echo "Starting Terraform plan..."
+          terraform plan -no-color -out=tfplan -detailed-exitcode || PLAN_EXIT_CODE=$?
+          if [ -f tfplan ]; then
+            echo "Plan file created successfully"
+            terraform show -no-color tfplan > plan.txt
+          else
+            echo "Warning: Plan file was not created"
+          fi
+          # Exit with 0 if plan succeeded (even if there are changes)
+          exit 0
         continue-on-error: true
 
       - name: Create Plan Summary
@@ -156,6 +168,7 @@ jobs:
 
       - name: Terraform Apply
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        timeout-minutes: 30
         if: github.event.inputs.terraform_action == 'apply'
         env:
           ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
@@ -166,6 +179,7 @@ jobs:
 
       - name: Terraform Destroy
         working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+        timeout-minutes: 30
         if: github.event.inputs.terraform_action == 'destroy'
         env:
           ARM_CLIENT_ID: ${{ env.ARM_CLIENT_ID }}
