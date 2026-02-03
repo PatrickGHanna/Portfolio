@@ -135,7 +135,7 @@ resource "azurerm_static_web_app" "frontend" {
   sku_size            = "Free"
 
   app_settings = {
-    "VITE_API_URL" = "https://${azurerm_linux_web_app.backend.default_site_hostname}/api"
+    "VITE_API_URL" = "https://${azurerm_linux_web_app.backend.default_hostname}/api"
   }
 
   tags = var.tags
@@ -151,12 +151,12 @@ resource "random_string" "suffix" {
 
 # Outputs
 output "backend_url" {
-  value       = "https://${azurerm_linux_web_app.backend.default_site_hostname}"
+  value       = "https://${azurerm_linux_web_app.backend.default_hostname}"
   description = "Backend App Service URL"
 }
 
 output "backend_api_url" {
-  value       = "https://${azurerm_linux_web_app.backend.default_site_hostname}/api"
+  value       = "https://${azurerm_linux_web_app.backend.default_hostname}/api"
   description = "Backend API URL (with /api path)"
 }
 
