@@ -89,7 +89,13 @@ jobs:
                   APP_NAME=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[?contains(name, 'api')].name" -o tsv | head -n 1)
                 fi
                 
-                # Pattern 3: Any app service in the resource group (last resort)
+                # Pattern 3: Contains 'portfolio' (matches Terraform naming pattern)
+                if [ -z "$APP_NAME" ]; then
+                  echo "Trying alternative pattern: app service with 'portfolio' in name..."
+                  APP_NAME=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[?contains(name, 'portfolio')].name" -o tsv | head -n 1)
+                fi
+                
+                # Pattern 4: Any app service in the resource group (last resort)
                 if [ -z "$APP_NAME" ]; then
                   echo "Trying to get any app service in resource group..."
                   APP_NAME=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv)
@@ -97,6 +103,10 @@ jobs:
                 
                 if [ -z "$APP_NAME" ]; then
                   echo "Error: Could not find any app service in resource group: $RESOURCE_GROUP"
+                  echo ""
+                  echo "Available app services in resource group:"
+                  az webapp list --resource-group "$RESOURCE_GROUP" --query "[].name" -o table || echo "Could not list app services"
+                  echo ""
                   echo "Please verify:"
                   echo "1. The resource group name is correct"
                   echo "2. The app service has been created (run terraform apply if needed)"
