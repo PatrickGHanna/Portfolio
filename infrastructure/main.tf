@@ -87,11 +87,12 @@ resource "azurerm_log_analytics_workspace" "portfolio" {
 
 # App Service Plan for Backend API
 resource "azurerm_service_plan" "backend" {
-  name                = "${var.project_name}-backend-plan"
-  resource_group_name = azurerm_resource_group.portfolio.name
-  location            = azurerm_resource_group.portfolio.location
-  os_type             = "Linux"
-  sku_name            = var.backend_sku
+  name                      = "${var.project_name}-backend-plan"
+  resource_group_name      = azurerm_resource_group.portfolio.name
+  location                 = azurerm_resource_group.portfolio.location
+  os_type                  = "Linux"
+  sku_name                 = var.backend_sku
+  per_site_scaling_enabled = false
 
   tags = var.tags
 }
@@ -130,7 +131,7 @@ resource "azurerm_linux_web_app" "backend" {
 resource "azurerm_static_web_app" "frontend" {
   name                = "${var.project_name}-web-${random_string.suffix.result}"
   resource_group_name = azurerm_resource_group.portfolio.name
-  location            = "West Europe 2"
+  location            = "westus2"
   sku_tier            = "Free"
   sku_size            = "Free"
 
