@@ -105,7 +105,7 @@ resource "azurerm_windows_web_app" "backend" {
 
   site_config {
     application_stack {
-      dotnet_version = "8.0"
+      dotnet_version = "v8.0"
     }
     always_on         = true
     health_check_path = "/api/health"
