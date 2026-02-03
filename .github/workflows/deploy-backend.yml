@@ -46,19 +46,43 @@ jobs:
         uses: azure/CLI@v2
         with:
           inlineScript: |
-            # Try to get app service name from secret first, otherwise query dynamically
+            # Try to get app service name from secret first
             if [ -n "${{ secrets.AZURE_WEBAPP_NAME }}" ]; then
               echo "Using app service name from secret: ${{ secrets.AZURE_WEBAPP_NAME }}"
               echo "app_name=${{ secrets.AZURE_WEBAPP_NAME }}" >> $GITHUB_OUTPUT
+            # Otherwise, query for app service by name pattern
             else
-              echo "Querying for app service name in resource group: ${{ secrets.AZURE_RESOURCE_GROUP }}"
-              APP_NAME=$(az webapp list --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" --query "[?contains(name, 'portfolio') && contains(name, 'api')].name" -o tsv | head -n 1)
-              if [ -z "$APP_NAME" ]; then
-                echo "Error: Could not find backend app service in resource group"
-                exit 1
+              echo "Querying for backend app service..."
+              # First, try to get resource group from secret
+              RESOURCE_GROUP="${{ secrets.AZURE_RG }}"
+              
+              # If resource group is not set, search across all resource groups
+              if [ -z "$RESOURCE_GROUP" ]; then
+                echo "Resource group not specified, searching across all resource groups..."
+                # Search for app service containing 'portfolio' and 'api' in any resource group
+                APP_INFO=$(az webapp list --query "[?contains(name, 'portfolio') && contains(name, 'api')].{name:name, resourceGroup:resourceGroup}" -o tsv | head -n 1)
+                if [ -n "$APP_INFO" ]; then
+                  APP_NAME=$(echo "$APP_INFO" | cut -f1)
+                  RESOURCE_GROUP=$(echo "$APP_INFO" | cut -f2)
+                  echo "Found app service: $APP_NAME in resource group: $RESOURCE_GROUP"
+                  echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
+                  echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
+                else
+                  echo "Error: Could not find backend app service. Please set AZURE_WEBAPP_NAME or AZURE_RG secret."
+                  exit 1
+                fi
+              else
+                # Resource group is specified, query within that group
+                echo "Querying in resource group: $RESOURCE_GROUP"
+                APP_NAME=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[?contains(name, 'portfolio') && contains(name, 'api')].name" -o tsv | head -n 1)
+                if [ -z "$APP_NAME" ]; then
+                  echo "Error: Could not find backend app service in resource group: $RESOURCE_GROUP"
+                  exit 1
+                fi
+                echo "Found app service: $APP_NAME"
+                echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
+                echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
               fi
-              echo "Found app service: $APP_NAME"
-              echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
             fi
 
       - name: Deploy to Azure App Service
@@ -72,18 +96,28 @@ jobs:
         uses: azure/CLI@v2
         with:
           inlineScript: |
+            RESOURCE_GROUP="${{ steps.get_app_name.outputs.resource_group || secrets.AZURE_RG }}"
+            if [ -z "$RESOURCE_GROUP" ]; then
+              echo "Error: Resource group not found. Please set AZURE_RG secret."
+              exit 1
+            fi
             az webapp config appsettings set \
               --name ${{ steps.get_app_name.outputs.app_name }} \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --resource-group "$RESOURCE_GROUP" \
               --settings CORS_ALLOWED_ORIGINS="${{ secrets.CORS_ALLOWED_ORIGINS }}"
 
       - name: Configure App Settings - Application Insights
         uses: azure/CLI@v2
         with:
           inlineScript: |
+            RESOURCE_GROUP="${{ steps.get_app_name.outputs.resource_group || secrets.AZURE_RG }}"
+            if [ -z "$RESOURCE_GROUP" ]; then
+              echo "Error: Resource group not found. Please set AZURE_RG secret."
+              exit 1
+            fi
             az webapp config appsettings set \
               --name ${{ steps.get_app_name.outputs.app_name }} \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --resource-group "$RESOURCE_GROUP" \
               --settings ApplicationInsights__ConnectionString="${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}"
 
       - name: Azure Logout
