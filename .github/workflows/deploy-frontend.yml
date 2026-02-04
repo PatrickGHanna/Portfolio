@@ -134,6 +134,19 @@ jobs:
           echo ""
           echo "=== All files in dist (recursive) ==="
           find "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}" -type f | head -20
+          
+          # Verify the structure Azure will see
+          echo ""
+          echo "=== Azure deployment structure verification ==="
+          echo "App location: ${{ env.APP_LOCATION }}"
+          echo "Output location: ${{ env.OUTPUT_LOCATION }}"
+          echo "Full path to output: ${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}"
+          echo ""
+          echo "Files that will be deployed to root:"
+          find "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}" -maxdepth 1 -type f -exec basename {} \;
+          echo ""
+          echo "Directories that will be deployed:"
+          find "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}" -maxdepth 1 -type d ! -path "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}" -exec basename {} \;
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
