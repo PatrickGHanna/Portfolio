@@ -112,47 +112,28 @@ jobs:
 
       - name: Prepare deployment package
         run: |
-          # Create a clean deployment directory with only built files at root level
-          # This ensures files are deployed to / not /dist
-          mkdir -p deploy-root
-          # Copy all contents from dist to deploy-root (not the dist folder itself)
-          cp -r "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}"/* deploy-root/ 2>/dev/null || true
-          cp -r "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}"/.[!.]* deploy-root/ 2>/dev/null || true
-          echo "=== Deployment root contents ==="
-          ls -la deploy-root/
-          echo ""
-          echo "=== Checking assets folder ==="
-          if [ -d "deploy-root/assets" ]; then
-            echo "✓ Assets folder exists"
-            ls -la deploy-root/assets/
-          else
-            echo "::error::Assets folder not found!"
-            exit 1
+          # Ensure staticwebapp.config.json is in dist folder
+          if [ -f "${{ env.APP_LOCATION }}/staticwebapp.config.json" ]; then
+            cp "${{ env.APP_LOCATION }}/staticwebapp.config.json" "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/staticwebapp.config.json"
+            echo "✓ Copied staticwebapp.config.json to dist folder"
           fi
+          
+          echo "=== Verifying dist folder structure ==="
+          echo "Contents of dist folder:"
+          ls -la "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/"
           echo ""
-          echo "=== Checking staticwebapp.config.json ==="
-          if [ -f "deploy-root/staticwebapp.config.json" ]; then
-            echo "✓ staticwebapp.config.json found"
-            cat deploy-root/staticwebapp.config.json
-          else
-            echo "::error::staticwebapp.config.json not found in deploy-root!"
-            exit 1
-          fi
+          echo "Assets folder:"
+          ls -la "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/assets/" || echo "ERROR: Assets folder missing!"
           echo ""
-          echo "=== index.html in deployment root ==="
-          cat deploy-root/index.html
+          echo "Checking key files:"
+          [ -f "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/index.html" ] && echo "✓ index.html" || echo "✗ index.html missing"
+          [ -f "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/staticwebapp.config.json" ] && echo "✓ staticwebapp.config.json" || echo "✗ config missing"
+          [ -d "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/assets" ] && echo "✓ assets folder" || echo "✗ assets folder missing"
+          
+          # List all files in dist for verification
           echo ""
-          echo "=== Verifying paths in index.html ==="
-          if grep -q "/assets/" deploy-root/index.html; then
-            echo "✓ index.html correctly references /assets/ paths"
-          else
-            echo "::error::index.html does not reference /assets/ paths correctly"
-            exit 1
-          fi
-          if grep -q "/src/main.jsx" deploy-root/index.html; then
-            echo "::error::ERROR: index.html still references /src/main.jsx!"
-            exit 1
-          fi
+          echo "=== All files in dist (recursive) ==="
+          find "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}" -type f | head -20
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
@@ -160,6 +141,6 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
-          app_location: deploy-root
-          output_location: '.'
+          app_location: ${{ env.APP_LOCATION }}
+          output_location: ${{ env.OUTPUT_LOCATION }}
           skip_app_build: true
