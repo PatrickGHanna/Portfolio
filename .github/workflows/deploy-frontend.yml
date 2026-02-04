@@ -12,8 +12,8 @@ on:
 
 env:
   NODE_VERSION: '20.x'
-  APP_LOCATION: 'frontend'
-  OUTPUT_LOCATION: '/'
+  APP_LOCATION: 'frontend/dist'
+  OUTPUT_LOCATION: '/dist'
 
 jobs:
   build-and-deploy:
