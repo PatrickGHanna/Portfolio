@@ -5,9 +5,9 @@ variable "resource_group_name" {
 }
 
 variable "location" {
-  description = "Azure region for resources. Use 'eastus' for best quota availability"
+  description = "Azure region for resources"
   type        = string
-  default     = "eastus"
+  default     = "westus2"
 }
 
 variable "project_name" {
