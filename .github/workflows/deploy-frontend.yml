@@ -155,5 +155,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
           app_location: ".deploy"
-          output_location: "."
+          app_artifact_location: "."
           skip_app_build: true
