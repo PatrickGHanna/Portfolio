@@ -4,6 +4,7 @@
     "exclude": [
       "/api/*",
       "/assets/*",
+      "/images/*",
       "/*.css",
       "/*.js",
       "/*.map",
@@ -40,14 +41,20 @@
   },
   "routes": [
     {
-      "route": "/api/*",
-      "allowedRoles": ["anonymous"]
-    },
-    {
       "route": "/assets/*",
       "headers": {
         "cache-control": "public, max-age=31536000, immutable"
       }
+    },
+    {
+      "route": "/images/*",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "route": "/api/*",
+      "allowedRoles": ["anonymous"]
     },
     {
       "route": "/*",
