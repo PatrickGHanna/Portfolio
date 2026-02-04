@@ -112,14 +112,29 @@ jobs:
 
       - name: Prepare deployment package
         run: |
-          # Create a clean deployment directory with only built files
-          mkdir -p deploy-package
-          cp -r "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}"/* deploy-package/
-          echo "=== Deployment package contents ==="
-          ls -la deploy-package/
+          # Create a clean deployment directory with only built files at root level
+          # This ensures files are deployed to / not /dist
+          mkdir -p deploy-root
+          # Copy all contents from dist to deploy-root (not the dist folder itself)
+          cp -r "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}"/* deploy-root/ 2>/dev/null || true
+          cp -r "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}"/.[!.]* deploy-root/ 2>/dev/null || true
+          echo "=== Deployment root contents ==="
+          ls -la deploy-root/
           echo ""
-          echo "=== index.html in deployment package ==="
-          cat deploy-package/index.html
+          echo "=== index.html in deployment root ==="
+          cat deploy-root/index.html
+          echo ""
+          echo "=== Verifying paths in index.html ==="
+          if grep -q "/assets/" deploy-root/index.html; then
+            echo "✓ index.html correctly references /assets/ paths"
+          else
+            echo "::error::index.html does not reference /assets/ paths correctly"
+            exit 1
+          fi
+          if grep -q "/src/main.jsx" deploy-root/index.html; then
+            echo "::error::ERROR: index.html still references /src/main.jsx!"
+            exit 1
+          fi
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
@@ -127,6 +142,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
-          app_location: deploy-package
-          output_location: '.'
+          app_location: ${{ env.APP_LOCATION }}
+          output_location: ${{ env.OUTPUT_LOCATION }}
+          app_artifact_location: deploy-root
           skip_app_build: true
