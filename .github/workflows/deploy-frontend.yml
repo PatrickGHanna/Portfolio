@@ -44,20 +44,6 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL || vars.VITE_API_URL }}
         run: npm run build
 
-      - name: Copy Static Web App Config
-        run: |
-          if [ -f "${{ env.APP_LOCATION }}/staticwebapp.config.json" ]; then
-            # Only copy if source and destination are different
-            if [ "${{ env.APP_LOCATION }}/staticwebapp.config.json" != "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/staticwebapp.config.json" ]; then
-              cp "${{ env.APP_LOCATION }}/staticwebapp.config.json" "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/staticwebapp.config.json"
-              echo "✓ Copied staticwebapp.config.json to ${{ env.OUTPUT_LOCATION }} folder"
-            else
-              echo "✓ staticwebapp.config.json already in correct location"
-            fi
-          else
-            echo "⚠ staticwebapp.config.json not found, skipping"
-          fi
-
       - name: Verify dist folder contents before deployment
         run: |
           echo "=== Contents of output (${{ env.OUTPUT_LOCATION }}) folder ==="
