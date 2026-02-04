@@ -38,11 +38,117 @@ jobs:
         working-directory: ${{ env.APP_LOCATION }}
         run: npm ci
 
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get Backend API URL
+        id: get_api_url
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            # Try to get API URL from variable or secret (variable takes precedence)
+            API_URL_VAR="${{ vars.VITE_API_URL }}"
+            API_URL_SECRET="${{ secrets.VITE_API_URL }}"
+            RESOURCE_GROUP_VAR="${{ vars.AZURE_RG }}"
+            RESOURCE_GROUP_SECRET="${{ secrets.AZURE_RG }}"
+            
+            # Use variable if set, otherwise fall back to secret
+            API_URL="${API_URL_VAR:-$API_URL_SECRET}"
+            RESOURCE_GROUP="${RESOURCE_GROUP_VAR:-$RESOURCE_GROUP_SECRET}"
+            
+            if [ -n "$API_URL" ]; then
+              echo "Using API URL from variable/secret: $API_URL"
+              echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+            # Otherwise, query Azure for backend App Service URL
+            else
+              echo "Querying Azure for backend App Service URL..."
+              
+              # If resource group is not set, search across all resource groups
+              if [ -z "$RESOURCE_GROUP" ]; then
+                echo "Resource group not specified, searching across all resource groups..."
+                # Search for app service containing 'portfolio' and 'api' in any resource group
+                APP_INFO=$(az webapp list --query "[?contains(name, 'portfolio') && contains(name, 'api')].{name:name, resourceGroup:resourceGroup}" -o tsv | head -n 1)
+                if [ -n "$APP_INFO" ]; then
+                  APP_NAME=$(echo "$APP_INFO" | cut -f1)
+                  RESOURCE_GROUP=$(echo "$APP_INFO" | cut -f2)
+                  echo "Found app service: $APP_NAME in resource group: $RESOURCE_GROUP"
+                else
+                  echo "Error: Could not find backend app service. Please set VITE_API_URL or AZURE_RG variable/secret."
+                  exit 1
+                fi
+              else
+                # Resource group is specified, query within that group
+                echo "Querying in resource group: $RESOURCE_GROUP"
+                
+                # Try multiple query patterns to find the backend app service
+                # Pattern 1: Contains both 'portfolio' and 'api'
+                APP_NAME=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[?contains(name, 'portfolio') && contains(name, 'api')].name" -o tsv | head -n 1)
+                
+                # Pattern 2: Contains 'api' (in case portfolio is in resource group name, not app name)
+                if [ -z "$APP_NAME" ]; then
+                  echo "Trying alternative pattern: app service with 'api' in name..."
+                  APP_NAME=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[?contains(name, 'api')].name" -o tsv | head -n 1)
+                fi
+                
+                # Pattern 3: Contains 'portfolio' (matches Terraform naming pattern)
+                if [ -z "$APP_NAME" ]; then
+                  echo "Trying alternative pattern: app service with 'portfolio' in name..."
+                  APP_NAME=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[?contains(name, 'portfolio')].name" -o tsv | head -n 1)
+                fi
+                
+                # Pattern 4: Any app service in the resource group (last resort)
+                if [ -z "$APP_NAME" ]; then
+                  echo "Trying to get any app service in resource group..."
+                  APP_NAME=$(az webapp list --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv)
+                fi
+                
+                if [ -z "$APP_NAME" ]; then
+                  echo "Error: Could not find any app service in resource group: $RESOURCE_GROUP"
+                  echo ""
+                  echo "Available app services in resource group:"
+                  az webapp list --resource-group "$RESOURCE_GROUP" --query "[].name" -o table || echo "Could not list app services"
+                  echo ""
+                  echo "Please verify:"
+                  echo "1. The resource group name is correct"
+                  echo "2. The app service has been created (run terraform apply if needed)"
+                  echo "3. Or set VITE_API_URL variable/secret with the API URL"
+                  exit 1
+                fi
+                echo "Found app service: $APP_NAME"
+              fi
+              
+              # Get the default hostname of the app service
+              echo "Getting default hostname for app service: $APP_NAME"
+              HOSTNAME=$(az webapp show --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" --query defaultHostName -o tsv)
+              
+              if [ -z "$HOSTNAME" ]; then
+                echo "Error: Could not retrieve hostname for app service: $APP_NAME"
+                exit 1
+              fi
+              
+              # Construct the API URL
+              API_URL="https://${HOSTNAME}/api"
+              echo "Backend API URL: $API_URL"
+              echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+            fi
+            
+            # Verify output was set
+            if [ -z "$API_URL" ] && [ -z "$API_URL_VAR" ] && [ -z "$API_URL_SECRET" ]; then
+              echo "Error: Failed to determine API URL"
+              echo "Please set VITE_API_URL as a variable or secret, or set AZURE_RG to enable Azure query"
+              exit 1
+            fi
+
       - name: Build frontend
         working-directory: ${{ env.APP_LOCATION }}
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL || vars.VITE_API_URL }}
+          VITE_API_URL: ${{ steps.get_api_url.outputs.api_url || secrets.VITE_API_URL || vars.VITE_API_URL }}
         run: npm run build
+
+      - name: Azure Logout
+        run: az logout
 
       - name: Verify dist folder contents before deployment
         run: |
