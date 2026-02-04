@@ -119,27 +119,34 @@ jobs:
         run: |
           # Ensure staticwebapp.config.json is in dist folder
           if [ -f "${{ env.APP_LOCATION }}/staticwebapp.config.json" ]; then
-            # Only copy if source and destination are different
-            if [ "${{ env.APP_LOCATION }}/staticwebapp.config.json" != "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/staticwebapp.config.json" ]; then
-              cp "${{ env.APP_LOCATION }}/staticwebapp.config.json" "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/staticwebapp.config.json"
-              echo "✓ Copied staticwebapp.config.json to dist folder"
-            else
-              echo "✓ staticwebapp.config.json already in correct location"
-            fi
+            cp "${{ env.APP_LOCATION }}/staticwebapp.config.json" "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/staticwebapp.config.json"
+            echo "✓ Copied staticwebapp.config.json to dist folder"
           fi
           
+          # Create deployment folder at repo root and copy all contents from dist
+          DEPLOY_DIR=".deploy"
+          rm -rf "$DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR"
+          
+          echo "Copying all contents from ${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/ to $DEPLOY_DIR/"
+          cp -r "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}"/* "$DEPLOY_DIR/" 2>/dev/null || true
+          cp -r "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}"/. "$DEPLOY_DIR/" 2>/dev/null || true
+          
           echo ""
-          echo "=== Verifying dist folder structure ==="
-          echo "Contents of dist folder:"
-          ls -la "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/"
-          echo ""
-          echo "Assets folder:"
-          ls -la "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/assets/" || echo "ERROR: Assets folder missing!"
+          echo "=== Verifying deployment folder structure ==="
+          echo "Contents of deployment folder:"
+          ls -la "$DEPLOY_DIR/"
           echo ""
           echo "Checking key files:"
-          [ -f "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/index.html" ] && echo "✓ index.html" || echo "✗ index.html missing"
-          [ -f "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/staticwebapp.config.json" ] && echo "✓ staticwebapp.config.json" || echo "✗ config missing"
-          [ -d "${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}/assets" ] && echo "✓ assets folder" || echo "✗ assets folder missing"
+          [ -f "$DEPLOY_DIR/index.html" ] && echo "✓ index.html" || echo "✗ index.html missing"
+          [ -f "$DEPLOY_DIR/staticwebapp.config.json" ] && echo "✓ staticwebapp.config.json" || echo "✗ config missing"
+          [ -d "$DEPLOY_DIR/assets" ] && echo "✓ assets folder" || echo "✗ assets folder missing"
+          echo ""
+          echo "Verifying index.html references:"
+          if [ -f "$DEPLOY_DIR/index.html" ]; then
+            grep -o 'src="[^"]*"' "$DEPLOY_DIR/index.html" || true
+            grep -o 'href="[^"]*"' "$DEPLOY_DIR/index.html" || true
+          fi
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
@@ -147,6 +154,6 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
-          app_location: ${{ env.APP_LOCATION }}/${{ env.OUTPUT_LOCATION }}
-          output_location: "."
+          app_location: .deploy
+          output_location: "/"
           skip_app_build: true
