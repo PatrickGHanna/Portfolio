@@ -144,7 +144,7 @@ jobs:
       - name: Build frontend
         working-directory: ${{ env.APP_LOCATION }}
         env:
-          VITE_API_URL: ${{ steps.get_api_url.outputs.api_url || secrets.VITE_API_URL || vars.VITE_API_URL }}
+          VITE_API_URL: ${{ steps.get_api_url.outputs.api_url}}
         run: npm run build
 
       - name: Azure Logout
