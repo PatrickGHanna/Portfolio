@@ -140,6 +140,7 @@ jobs:
               echo "Please set VITE_APP_API_URL as a variable or secret, or set AZURE_RG to enable Azure query"
               exit 1
             fi
+            echo "API URL: $API_URL"
 
       - name: Build frontend
         working-directory: ${{ env.APP_LOCATION }}
