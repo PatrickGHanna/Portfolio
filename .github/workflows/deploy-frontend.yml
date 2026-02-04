@@ -49,8 +49,8 @@ jobs:
         with:
           inlineScript: |
             # Try to get API URL from variable or secret (variable takes precedence)
-            API_URL_VAR="${{ vars.VITE_API_URL }}"
-            API_URL_SECRET="${{ secrets.VITE_API_URL }}"
+            API_URL_VAR="${{ vars.VITE_APP_API_URL }}"
+            API_URL_SECRET="${{ secrets.VITE_APP_API_URL }}"
             RESOURCE_GROUP_VAR="${{ vars.AZURE_RG }}"
             RESOURCE_GROUP_SECRET="${{ secrets.AZURE_RG }}"
             
@@ -75,7 +75,7 @@ jobs:
                   RESOURCE_GROUP=$(echo "$APP_INFO" | cut -f2)
                   echo "Found app service: $APP_NAME in resource group: $RESOURCE_GROUP"
                 else
-                  echo "Error: Could not find backend app service. Please set VITE_API_URL or AZURE_RG variable/secret."
+                  echo "Error: Could not find backend app service. Please set VITE_APP_API_URL or AZURE_RG variable/secret."
                   exit 1
                 fi
               else
@@ -113,7 +113,7 @@ jobs:
                   echo "Please verify:"
                   echo "1. The resource group name is correct"
                   echo "2. The app service has been created (run terraform apply if needed)"
-                  echo "3. Or set VITE_API_URL variable/secret with the API URL"
+                  echo "3. Or set VITE_APP_API_URL variable/secret with the API URL"
                   exit 1
                 fi
                 echo "Found app service: $APP_NAME"
@@ -137,14 +137,14 @@ jobs:
             # Verify output was set
             if [ -z "$API_URL" ] && [ -z "$API_URL_VAR" ] && [ -z "$API_URL_SECRET" ]; then
               echo "Error: Failed to determine API URL"
-              echo "Please set VITE_API_URL as a variable or secret, or set AZURE_RG to enable Azure query"
+              echo "Please set VITE_APP_API_URL as a variable or secret, or set AZURE_RG to enable Azure query"
               exit 1
             fi
 
       - name: Build frontend
         working-directory: ${{ env.APP_LOCATION }}
         env:
-          VITE_API_URL: ${{ steps.get_api_url.outputs.api_url}}
+          VITE_APP_API_URL: ${{ steps.get_api_url.outputs.api_url}}
         run: npm run build
 
       - name: Azure Logout

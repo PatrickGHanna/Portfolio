@@ -138,7 +138,7 @@ resource "azurerm_static_web_app" "frontend" {
   sku_size            = "Free"
 
   app_settings = {
-    "VITE_API_URL" = "https://${azurerm_windows_web_app.backend.default_hostname}/api"
+    "VITE_APP_API_URL" = "https://${azurerm_windows_web_app.backend.default_hostname}/api"
   }
 
   tags = var.tags

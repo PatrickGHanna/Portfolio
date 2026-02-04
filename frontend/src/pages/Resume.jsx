@@ -11,7 +11,7 @@ import './Resume.css'
 
 // Get backend base URL (without /api) for static files
 const getBackendBaseUrl = () => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  const apiUrl = import.meta.env.VITE_APP_API_URL || 'http://localhost:5000/api'
   // Remove /api suffix if present to get base backend URL
   return apiUrl.replace(/\/api\/?$/, '')
 }

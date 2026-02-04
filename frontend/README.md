@@ -50,7 +50,7 @@ npm run preview
 Create a `.env` file in the frontend directory:
 
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_APP_API_URL=http://localhost:5000/api
 ```
 
 For production, this is automatically configured by Azure Static Web Apps.

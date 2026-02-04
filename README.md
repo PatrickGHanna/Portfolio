@@ -144,7 +144,7 @@ Edit `appsettings.json` or `appsettings.Development.json`:
 Create a `.env` file in the `frontend` directory:
 
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_APP_API_URL=http://localhost:5000/api
 ```
 
 For production, this will be set automatically by Azure Static Web Apps.
@@ -290,7 +290,7 @@ This project is open source and available under the MIT License.
 
 ### API Not Responding
 - Verify backend is running on the correct port
-- Check `VITE_API_URL` in frontend `.env` file
+- Check `VITE_APP_API_URL` in frontend `.env` file
 - Review browser console for errors
 
 ### Build Errors
