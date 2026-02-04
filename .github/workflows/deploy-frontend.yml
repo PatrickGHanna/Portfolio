@@ -12,7 +12,7 @@ on:
 
 env:
   NODE_VERSION: '20.x'
-yy  APP_LOCATION: 'frontend'
+  APP_LOCATION: 'frontend'
   OUTPUT_LOCATION: 'dist'
 
 jobs:
