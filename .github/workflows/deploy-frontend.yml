@@ -121,6 +121,24 @@ jobs:
           echo "=== Deployment root contents ==="
           ls -la deploy-root/
           echo ""
+          echo "=== Checking assets folder ==="
+          if [ -d "deploy-root/assets" ]; then
+            echo "✓ Assets folder exists"
+            ls -la deploy-root/assets/
+          else
+            echo "::error::Assets folder not found!"
+            exit 1
+          fi
+          echo ""
+          echo "=== Checking staticwebapp.config.json ==="
+          if [ -f "deploy-root/staticwebapp.config.json" ]; then
+            echo "✓ staticwebapp.config.json found"
+            cat deploy-root/staticwebapp.config.json
+          else
+            echo "::error::staticwebapp.config.json not found in deploy-root!"
+            exit 1
+          fi
+          echo ""
           echo "=== index.html in deployment root ==="
           cat deploy-root/index.html
           echo ""
@@ -142,7 +160,6 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
-          app_location: ${{ env.APP_LOCATION }}
-          output_location: ${{ env.OUTPUT_LOCATION }}
-          app_artifact_location: deploy-root
+          app_location: deploy-root
+          output_location: '.'
           skip_app_build: true
