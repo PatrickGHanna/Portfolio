@@ -1,7 +1,7 @@
 import axios from 'axios'
 const apiUrl = import.meta.env.VITE_APP_API_URL;
 
-const API_BASE_URL = apiUrl || 'http://localhost:5000/api'
+const API_BASE_URL = "https://portfolio-api-ina26k.azurewebsites.net/api" || 'http://localhost:5000/api'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
