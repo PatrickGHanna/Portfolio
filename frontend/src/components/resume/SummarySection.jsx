@@ -6,7 +6,7 @@ function SummarySection({ summary }) {
   }
 
   return (
-    <ResumeSection title="Summary">
+    <ResumeSection title="Software Engineering Manager">
       <p>{summary}</p>
     </ResumeSection>
   )

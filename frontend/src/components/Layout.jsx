@@ -50,11 +50,6 @@ function Layout({ children }) {
                 Resume
               </Link>
             </li>
-            <li>
-              <Link to="/projects" className={`nav-link ${isActive('/projects')}`} onClick={closeMenu}>
-                Projects
-              </Link>
-            </li>
           </ul>
         </div>
       </nav>
