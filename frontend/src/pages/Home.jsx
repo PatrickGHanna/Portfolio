@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { homeApi } from '../services/api'
 import './Home.css'
+const apiUrl = import.meta.env.VITE_APP_API_URL;
 
 function Home() {
   const [data, setData] = useState(null)
@@ -25,7 +26,7 @@ function Home() {
   }, [])
 
   if (loading) return <div className="loading">Loading...</div>
-  if (error) return <div className="error">{error}</div>
+  if (error) return <div className="error">{error} {apiUrl}</div>
 
   return (
     <div className="home">
