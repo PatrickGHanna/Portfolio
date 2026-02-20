@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { aboutApi } from '../services/api'
+import AboutSection from '../components/AboutSection'
 import './About.css'
 
 function About() {
@@ -28,10 +29,6 @@ function About() {
 
   return (
     <div className="about">
-      <div className="about-header">
-        <h1>About Me</h1>
-      </div>
-
       <div className="about-content">
         <div className="about-main">
           <div className="about-header-section">
@@ -55,22 +52,15 @@ function About() {
             <p className="about-bio">Bio information goes here.</p>
           )}
 
-          <div className="about-skills">
-            <h3>Skills</h3>
-            <div className="skills-grid">
-              {data?.skills?.map((skill, index) => (
-                <span key={index} className="skill-tag">
-                  {skill}
-                </span>
-              )) || (
-                <>
-                  <span className="skill-tag">.NET Core</span>
-                  <span className="skill-tag">React</span>
-                  <span className="skill-tag">Node.js</span>
-                </>
-              )}
-            </div>
-          </div>
+          {(data?.sections ?? []).map((section, index) => (
+            <AboutSection
+              key={index}
+              title={section.title}
+              imageUrl={section.imageUrl}
+              content={section.content}
+              imageOnRight={index % 2 === 0}
+            />
+          ))}
         </div>
 
         <div className="about-sidebar">
