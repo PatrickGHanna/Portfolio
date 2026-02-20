@@ -36,7 +36,14 @@ public class AboutController : ControllerBase
             location = "Salt Lake City, UT",
             email = "Patrick.Gene.Hanna@gmail.com",
             linkedIn = "https://www.linkedin.com/in/patrickgenehanna",
-            github = "https://github.com/patrickghanna"
+            github = "https://github.com/patrickghanna",
+            sections = new[]
+            {
+                new { title = "Travel", imageUrl = "/images/travel.png", content = "Travel is a huge passion for me. I love to explore new places, cultures, and experiences. Pictured here in front of Mount Everest from the Nepal side." },
+                new { title = "Music", imageUrl = "/images/music.jpg", content = "Concerts and festivals are a huge part of my life. I love to dance and get lost in the music. Pictured is a winter music festival I visited in France at the beginning of 2025 with my partner!" },
+                new { title = "Climbing", imageUrl = "/images/climbing.jpg", content = "Rock climbing has been one of my favorite ways to stay fit, and has been a connecting factor to some of my closest friends." },
+                new { title = "D&D", imageUrl = "/images/dnd.jpg", content = "At my core I am a huge nerd. I grew up watching the fantasy genre, with Lord of the Rings being one of my favorite movies. This passion has carried over into my adulthood, and I now enjoy playing Dungeons and Dragons with my friends, playing two times a week with seperate groups." }
+            }
         };
 
         return Ok(response);
